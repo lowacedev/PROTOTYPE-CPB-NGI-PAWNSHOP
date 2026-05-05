@@ -11,16 +11,14 @@ class TransactionItem extends Model
 
     protected $fillable = [
         'transaction_id',
-        'product_id',
+        'item_id',
+        'appraised_value',
         'quantity',
-        'unit_price',
-        'subtotal',
+        'notes',
     ];
 
     protected $casts = [
-        'quantity' => 'integer',
-        'unit_price' => 'decimal:2',
-        'subtotal' => 'decimal:2',
+        'appraised_value' => 'decimal:2',
     ];
 
     /**
@@ -32,10 +30,10 @@ class TransactionItem extends Model
     }
 
     /**
-     * Get the product for this item
+     * Get the item
      */
-    public function product()
+    public function item()
     {
-        return $this->belongsTo(Product::class);
+        return $this->belongsTo(Item::class);
     }
 }

@@ -3,7 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\Customer;
-use Illuminate\Http\Request;
+use App\Models\Region;
+use App\Http\Requests\StoreCustomerRequest;
+use App\Http\Requests\UpdateCustomerRequest;
+use Illuminate\Support\Facades\Storage;
 
 class CustomerController extends Controller
 {
@@ -12,7 +15,9 @@ class CustomerController extends Controller
      */
     public function index()
     {
-        $customers = Customer::latest()->paginate(15);
+        $customers = Customer::with('barangay', 'city', 'province', 'region')
+            ->latest()
+            ->paginate(15);
         return view('customers.index', compact('customers'));
     }
 
@@ -21,25 +26,26 @@ class CustomerController extends Controller
      */
     public function create()
     {
-        return view('customers.create');
+        $regions = Region::orderBy('name')->get();
+        return view('customers.create', compact('regions'));
     }
 
     /**
      * Store a newly created customer in storage.
      */
-    public function store(Request $request)
+    public function store(StoreCustomerRequest $request)
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:customers',
-            'phone' => 'required|string|max:20',
-            'address' => 'required|string',
-            'id_number' => 'required|string|unique:customers',
-            'id_type' => 'required|in:national_id,passport,driver_license',
-            'notes' => 'nullable|string',
-        ]);
+        $data = $request->validated();
 
-        Customer::create($validated);
+        // Handle ID image upload
+        if ($request->hasFile('id_image')) {
+            $data['id_image_path'] = $request->file('id_image')->store('customer-ids', 'public');
+        }
+
+        // Remove id_image from data (it's not a column)
+        unset($data['id_image']);
+
+        Customer::create($data);
 
         return redirect()->route('customers.index')->with('success', 'Customer registered successfully!');
     }
@@ -49,7 +55,7 @@ class CustomerController extends Controller
      */
     public function show(Customer $customer)
     {
-        $customer->load('loans.items');
+        $customer->load('transactions.items', 'region', 'province', 'city', 'barangay');
         return view('customers.show', compact('customer'));
     }
 
@@ -58,26 +64,31 @@ class CustomerController extends Controller
      */
     public function edit(Customer $customer)
     {
-        return view('customers.edit', compact('customer'));
+        $regions = Region::orderBy('name')->get();
+        $customer->load('region', 'province', 'city', 'barangay');
+        return view('customers.edit', compact('customer', 'regions'));
     }
 
     /**
      * Update the specified customer in storage.
      */
-    public function update(Request $request, Customer $customer)
+    public function update(UpdateCustomerRequest $request, Customer $customer)
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:customers,email,' . $customer->id,
-            'phone' => 'required|string|max:20',
-            'address' => 'required|string',
-            'id_number' => 'required|string|unique:customers,id_number,' . $customer->id,
-            'id_type' => 'required|in:national_id,passport,driver_license',
-            'notes' => 'nullable|string',
-            'is_active' => 'nullable|boolean',
-        ]);
+        $data = $request->validated();
 
-        $customer->update($validated);
+        // Handle ID image upload
+        if ($request->hasFile('id_image')) {
+            // Delete old image if exists
+            if ($customer->id_image_path) {
+                Storage::disk('public')->delete($customer->id_image_path);
+            }
+            $data['id_image_path'] = $request->file('id_image')->store('customer-ids', 'public');
+        }
+
+        // Remove id_image from data
+        unset($data['id_image']);
+
+        $customer->update($data);
 
         return redirect()->route('customers.index')->with('success', 'Customer updated successfully!');
     }
@@ -87,8 +98,12 @@ class CustomerController extends Controller
      */
     public function destroy(Customer $customer)
     {
+        // Delete ID image if exists
+        if ($customer->id_image_path) {
+            Storage::disk('public')->delete($customer->id_image_path);
+        }
+
         $customer->delete();
         return redirect()->route('customers.index')->with('success', 'Customer deleted successfully!');
     }
 }
-

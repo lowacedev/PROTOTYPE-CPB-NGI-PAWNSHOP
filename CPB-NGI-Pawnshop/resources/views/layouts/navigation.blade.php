@@ -15,27 +15,44 @@
                     <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
                         {{ __('Dashboard') }}
                     </x-nav-link>
-                    <x-nav-link :href="route('customers.index')" :active="request()->routeIs('customers.*')">
-                        {{ __('Customers') }}
-                    </x-nav-link>
-                    <x-nav-link :href="route('items.index')" :active="request()->routeIs('items.*')">
-                        {{ __('Items') }}
-                    </x-nav-link>
-                    <x-nav-link :href="route('loans.index')" :active="request()->routeIs('loans.*')">
-                        {{ __('Loans') }}
-                    </x-nav-link>
-                    <x-nav-link :href="route('payments.index')" :active="request()->routeIs('payments.*')">
-                        {{ __('Payments') }}
-                    </x-nav-link>
-                    <x-nav-link :href="route('categories.index')" :active="request()->routeIs('categories.*')">
-                        {{ __('Categories') }}
-                    </x-nav-link>
-                    <x-nav-link :href="route('safes.index')" :active="request()->routeIs('safes.*')">
-                        {{ __('Safes') }}
-                    </x-nav-link>
+                    @if(Auth::user()->isAdmin() || Auth::user()->isManager() || Auth::user()->isTeller())
+                        <x-nav-link :href="route('customers.index')" :active="request()->routeIs('customers.*')">
+                            {{ __('Customers') }}
+                        </x-nav-link>
+                        <x-nav-link :href="route('items.index')" :active="request()->routeIs('items.*')">
+                            {{ __('Items') }}
+                        </x-nav-link>
+                        <x-nav-link :href="route('transactions.index')" :active="request()->routeIs('transactions.index') || request()->routeIs('transactions.show')">
+                            {{ __('Pawn') }}
+                        </x-nav-link>
+                        <x-nav-link :href="route('payments.index')" :active="request()->routeIs('payments.*')">
+                            {{ __('Payments') }}
+                        </x-nav-link>
+                    @endif
+
+                    @if(Auth::user()->isAdmin() || Auth::user()->isManager() || Auth::user()->isCashier())
+                        <x-nav-link :href="route('pos.index')" :active="request()->routeIs('pos.*')">
+                            {{ __('POS') }}
+                        </x-nav-link>
+                    @endif
+
+                    @if(Auth::user()->isAdmin() || Auth::user()->isManager())
+                        <x-nav-link :href="route('reports.index')" :active="request()->routeIs('reports.*')">
+                            {{ __('Reports') }}
+                        </x-nav-link>
+                        <x-nav-link :href="route('categories.index')" :active="request()->routeIs('categories.*')">
+                            {{ __('Categories') }}
+                        </x-nav-link>
+                        <x-nav-link :href="route('safes.index')" :active="request()->routeIs('safes.*')">
+                            {{ __('Safes') }}
+                        </x-nav-link>
+                    @endif
                     @if(Auth::user()->isAdmin())
                         <x-nav-link :href="route('audit-logs.index')" :active="request()->routeIs('audit-logs.*')" class="text-yellow-600 hover:text-yellow-700 dark:text-yellow-400">
                             {{ __('Audit Logs') }}
+                        </x-nav-link>
+                        <x-nav-link :href="route('users.index')" :active="request()->routeIs('users.*')" class="text-red-600 hover:text-red-700 dark:text-red-400">
+                            {{ __('Users') }}
                         </x-nav-link>
                     @endif
                 </div>
@@ -93,27 +110,44 @@
             <x-responsive-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
                 {{ __('Dashboard') }}
             </x-responsive-nav-link>
-            <x-responsive-nav-link :href="route('customers.index')" :active="request()->routeIs('customers.*')">
-                {{ __('Customers') }}
-            </x-responsive-nav-link>
-            <x-responsive-nav-link :href="route('items.index')" :active="request()->routeIs('items.*')">
-                {{ __('Items') }}
-            </x-responsive-nav-link>
-            <x-responsive-nav-link :href="route('loans.index')" :active="request()->routeIs('loans.*')">
-                {{ __('Loans') }}
-            </x-responsive-nav-link>
-            <x-responsive-nav-link :href="route('payments.index')" :active="request()->routeIs('payments.*')">
-                {{ __('Payments') }}
-            </x-responsive-nav-link>
-            <x-responsive-nav-link :href="route('categories.index')" :active="request()->routeIs('categories.*')">
-                {{ __('Categories') }}
-            </x-responsive-nav-link>
-            <x-responsive-nav-link :href="route('safes.index')" :active="request()->routeIs('safes.*')">
-                {{ __('Safes') }}
-            </x-responsive-nav-link>
+            @if(Auth::user()->isAdmin() || Auth::user()->isManager() || Auth::user()->isTeller())
+                <x-responsive-nav-link :href="route('customers.index')" :active="request()->routeIs('customers.*')">
+                    {{ __('Customers') }}
+                </x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('items.index')" :active="request()->routeIs('items.*')">
+                    {{ __('Items') }}
+                </x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('transactions.index')" :active="request()->routeIs('transactions.index') || request()->routeIs('transactions.show')">
+                    {{ __('Transactions') }}
+                </x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('payments.index')" :active="request()->routeIs('payments.*')">
+                    {{ __('Payments') }}
+                </x-responsive-nav-link>
+            @endif
+
+            @if(Auth::user()->isAdmin() || Auth::user()->isManager() || Auth::user()->isCashier())
+                <x-responsive-nav-link :href="route('pos.index')" :active="request()->routeIs('pos.*')">
+                    {{ __('POS') }}
+                </x-responsive-nav-link>
+            @endif
+
+            @if(Auth::user()->isAdmin() || Auth::user()->isManager())
+                <x-responsive-nav-link :href="route('reports.index')" :active="request()->routeIs('reports.*')">
+                    {{ __('Reports') }}
+                </x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('categories.index')" :active="request()->routeIs('categories.*')">
+                    {{ __('Categories') }}
+                </x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('safes.index')" :active="request()->routeIs('safes.*')">
+                    {{ __('Safes') }}
+                </x-responsive-nav-link>
+            @endif
             @if(Auth::user()->isAdmin())
                 <x-responsive-nav-link :href="route('audit-logs.index')" :active="request()->routeIs('audit-logs.*')">
                     {{ __('Audit Logs') }}
+                </x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('users.index')" :active="request()->routeIs('users.*')">
+                    {{ __('Users') }}
                 </x-responsive-nav-link>
             @endif
         </div>

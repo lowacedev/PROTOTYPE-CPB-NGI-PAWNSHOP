@@ -21,6 +21,8 @@ class Item extends Model
         'location',
         'notes',
         'is_available',
+        'item_status',
+        'selling_price',
     ];
 
     protected $casts = [
@@ -45,28 +47,36 @@ class Item extends Model
     }
 
     /**
-     * Get all loan items for this item
+     * Get all transaction items for this item
      */
-    public function loanItems()
+    public function transactionItems()
     {
-        return $this->hasMany(LoanItem::class);
+        return $this->hasMany(TransactionItem::class);
     }
 
     /**
-     * Get all loans this item is part of
+     * Get all transactions this item is part of
      */
-    public function loans()
+    public function transactions()
     {
-        return $this->belongsToMany(Loan::class, 'loan_items')
+        return $this->belongsToMany(Transaction::class, 'transaction_items')
                     ->withPivot('appraised_value', 'quantity', 'notes')
                     ->withTimestamps();
     }
 
     /**
-     * Get the latest loan this item is part of
+     * Get the latest transaction this item is part of
      */
-    public function getLatestLoanAttribute()
+    public function getLatestTransactionAttribute()
     {
-        return $this->loans()->latest('loans.created_at')->first();
+        return $this->transactions()->latest('transactions.created_at')->first();
+    }
+
+    /**
+     * Get the sale record for this item if sold
+     */
+    public function saleItem()
+    {
+        return $this->hasOne(SaleItem::class);
     }
 }

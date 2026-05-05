@@ -41,7 +41,14 @@ class Safe extends Model
             if (!$safe->safe_code) {
                 // Generate safe code in format: SAFE-YYYYMMDD-###
                 $count = static::whereDate('created_at', today())->count() + 1;
-                $safe->safe_code = 'SAFE-' . now()->format('Ymd') . '-' . str_pad($count, 3, '0', STR_PAD_LEFT);
+                $code = 'SAFE-' . now()->format('Ymd') . '-' . str_pad($count, 3, '0', STR_PAD_LEFT);
+                
+                while (static::where('safe_code', $code)->exists()) {
+                    $count++;
+                    $code = 'SAFE-' . now()->format('Ymd') . '-' . str_pad($count, 3, '0', STR_PAD_LEFT);
+                }
+                
+                $safe->safe_code = $code;
             }
 
             // Set default capacity if not provided
@@ -53,7 +60,7 @@ class Safe extends Model
             if (!$safe->name) {
                 if ($safe->is_personal && $safe->customer_id) {
                     $customer = Customer::find($safe->customer_id);
-                    $safe->name = 'Safe - ' . ($customer ? $customer->name : 'Customer');
+                    $safe->name = 'Safe - ' . ($customer ? $customer->full_name : 'Customer');
                 } else {
                     $safe->name = 'Safe - ' . $safe->location;
                 }

@@ -4,7 +4,6 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Str;
 use App\Traits\Auditable;
 
 class Transaction extends Model
@@ -12,40 +11,69 @@ class Transaction extends Model
     use HasFactory, Auditable;
 
     protected $fillable = [
-        'transaction_number',
-        'type',
+        'pawn_ticket_number',
+        'customer_id',
         'user_id',
-        'total_amount',
-        'notes',
+        'transaction_type',
+        'loan_amount',
+        'interest_rate',
+        'term_days',
         'transaction_date',
+        'maturity_date',
+        'redemption_date',
+        'status',
+        'notes',
     ];
 
     protected $casts = [
-        'total_amount' => 'decimal:2',
+        'loan_amount' => 'decimal:2',
+        'interest_rate' => 'decimal:2',
         'transaction_date' => 'datetime',
-        'created_at' => 'datetime',
-        'updated_at' => 'datetime',
+        'maturity_date' => 'datetime',
+        'redemption_date' => 'datetime',
     ];
 
     /**
-     * Boot method - auto-generate transaction number
+     * Boot method - auto-generate pawn ticket number
      */
     protected static function boot()
     {
         parent::boot();
 
         static::creating(function ($model) {
-            if (!$model->transaction_number) {
-                // Generate transaction number like TRN-2026-04-28-001
+            if (!$model->pawn_ticket_number) {
                 $date = now()->format('Y-m-d');
                 $count = static::whereDate('created_at', now())->count() + 1;
-                $model->transaction_number = 'TRN-' . $date . '-' . str_pad($count, 3, '0', STR_PAD_LEFT);
+                $ticket = 'PT-' . $date . '-' . str_pad($count, 3, '0', STR_PAD_LEFT);
+                
+                // Ensure unique ticket number even if rows were deleted
+                while (static::where('pawn_ticket_number', $ticket)->exists()) {
+                    $count++;
+                    $ticket = 'PT-' . $date . '-' . str_pad($count, 3, '0', STR_PAD_LEFT);
+                }
+                
+                $model->pawn_ticket_number = $ticket;
+            }
+
+            // Set maturity date if not set
+            if (!$model->maturity_date && $model->transaction_date) {
+                $model->maturity_date = $model->transaction_date->addDays($model->term_days ?? 30);
             }
         });
     }
 
+    // ─── Relationships ─────────────────────────────────────────
+
     /**
-     * Get the user who created this transaction
+     * Get the customer for this transaction
+     */
+    public function customer()
+    {
+        return $this->belongsTo(Customer::class);
+    }
+
+    /**
+     * Get the user (staff) who created this transaction
      */
     public function user()
     {
@@ -61,51 +89,72 @@ class Transaction extends Model
     }
 
     /**
-     * Get type label for display
+     * Get all payments for this transaction
      */
-    public function getTypeLabel(): string
+    public function payments()
     {
-        return match($this->type) {
-            'SALE' => 'Sale',
-            'DISTRIBUTION' => 'Distribution',
-            'RETURN' => 'Return',
-            default => $this->type,
+        return $this->hasMany(Payment::class);
+    }
+
+    // ─── Computed Attributes ────────────────────────────────────
+
+    /**
+     * Calculate interest amount
+     */
+    public function calculateInterest()
+    {
+        return $this->loan_amount * ($this->interest_rate / 100);
+    }
+
+    /**
+     * Get total amount due (principal + interest)
+     */
+    public function getTotalDueAttribute()
+    {
+        return $this->loan_amount + $this->calculateInterest();
+    }
+
+    /**
+     * Get total paid
+     */
+    public function getTotalPaidAttribute()
+    {
+        return $this->payments()->sum('amount_paid');
+    }
+
+    /**
+     * Get remaining balance
+     */
+    public function getRemainingBalanceAttribute()
+    {
+        return $this->total_due - $this->total_paid;
+    }
+
+    /**
+     * Get status label
+     */
+    public function getStatusLabelAttribute()
+    {
+        return match ($this->status) {
+            'active' => 'Active',
+            'renewed' => 'Renewed',
+            'redeemed' => 'Redeemed',
+            'forfeited' => 'Forfeited',
+            'sold' => 'Sold',
+            default => $this->status,
         };
     }
 
     /**
-     * Add item to transaction
+     * Get transaction type label
      */
-    public function addItem($productId, $quantity, $unitPrice)
+    public function getTypeLabelAttribute()
     {
-        $subtotal = $quantity * $unitPrice;
-
-        TransactionItem::create([
-            'transaction_id' => $this->id,
-            'product_id' => $productId,
-            'quantity' => $quantity,
-            'unit_price' => $unitPrice,
-            'subtotal' => $subtotal,
-        ]);
-
-        // Update total amount
-        $this->total_amount += $subtotal;
-        $this->save();
-
-        // Deduct from stock
-        $product = Product::find($productId);
-        $product->removeStock($quantity, $this->user_id, "Sold via transaction {$this->transaction_number}");
-
-        return $this;
-    }
-
-    /**
-     * Calculate total from items
-     */
-    public function calculateTotal()
-    {
-        $this->total_amount = $this->items()->sum('subtotal');
-        $this->save();
-        return $this->total_amount;
+        return match ($this->transaction_type) {
+            'pawn' => 'Pawn',
+            'renewal' => 'Renewal',
+            'redemption' => 'Redemption',
+            default => $this->transaction_type,
+        };
     }
 }

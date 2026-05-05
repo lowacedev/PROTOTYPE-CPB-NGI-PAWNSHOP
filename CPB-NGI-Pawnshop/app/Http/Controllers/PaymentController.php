@@ -3,8 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Payment;
-use App\Models\Loan;
-use Illuminate\Http\Request;
+use App\Models\Transaction;
+use App\Http\Requests\StorePaymentRequest;
 
 class PaymentController extends Controller
 {
@@ -13,47 +13,41 @@ class PaymentController extends Controller
      */
     public function index()
     {
-        $payments = Payment::with('loan.customer')->latest()->paginate(15);
+        $payments = Payment::with('transaction.customer')->latest()->paginate(15);
         return view('payments.index', compact('payments'));
     }
 
     /**
      * Show the form for creating a new payment.
      */
-    public function create($loanId = null)
+    public function create($transactionId = null)
     {
-        $loan = null;
-        if ($loanId) {
-            $loan = Loan::findOrFail($loanId);
+        $transaction = null;
+        if ($transactionId) {
+            $transaction = Transaction::findOrFail($transactionId);
         }
-        $loans = Loan::where('status', 'active')->get();
-        return view('payments.create', compact('loan', 'loans'));
+        $transactions = Transaction::where('status', 'active')->with('customer')->get();
+        return view('payments.create', compact('transaction', 'transactions'));
     }
 
     /**
      * Store a newly created payment in storage.
      */
-    public function store(Request $request)
+    public function store(StorePaymentRequest $request)
     {
-        $validated = $request->validate([
-            'loan_id' => 'required|exists:loans,id',
-            'amount' => 'required|numeric|min:0.01',
-            'payment_method' => 'required|in:cash,check,card,bank_transfer',
-            'notes' => 'nullable|string',
-        ]);
+        $validated = $request->validated();
 
-        $loan = Loan::findOrFail($validated['loan_id']);
+        $transaction = Transaction::findOrFail($validated['transaction_id']);
 
-        if ($loan->status !== 'active') {
-            return redirect()->back()->with('error', 'Payment can only be made for active loans!');
+        if ($transaction->status !== 'active') {
+            return redirect()->back()->with('error', 'Payment can only be made for active transactions!');
         }
 
-        $validated['status'] = 'completed';
-        $validated['paid_at'] = now();
+        $validated['payment_date'] = now();
 
         Payment::create($validated);
 
-        return redirect()->route('loans.show', $loan)->with('success', 'Payment recorded successfully!');
+        return redirect()->route('transactions.show', $transaction)->with('success', 'Payment recorded successfully!');
     }
 
     /**
@@ -61,7 +55,7 @@ class PaymentController extends Controller
      */
     public function show(Payment $payment)
     {
-        $payment->load('loan.customer');
+        $payment->load('transaction.customer');
         return view('payments.show', compact('payment'));
     }
 
@@ -70,8 +64,8 @@ class PaymentController extends Controller
      */
     public function destroy(Payment $payment)
     {
-        $loan = $payment->loan;
+        $transaction = $payment->transaction;
         $payment->delete();
-        return redirect()->route('loans.show', $loan)->with('success', 'Payment deleted successfully!');
+        return redirect()->route('transactions.show', $transaction)->with('success', 'Payment deleted successfully!');
     }
 }

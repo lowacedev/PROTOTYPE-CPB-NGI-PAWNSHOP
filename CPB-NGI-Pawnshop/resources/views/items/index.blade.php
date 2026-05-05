@@ -31,7 +31,7 @@
                     <select name="status" class="px-4 py-2 border rounded-lg dark:bg-gray-700 dark:text-white">
                         <option value="">All Status</option>
                         <option value="available" {{ request('status') == 'available' ? 'selected' : '' }}>Available</option>
-                        <option value="loaned" {{ request('status') == 'loaned' ? 'selected' : '' }}>In Loan</option>
+                        <option value="loaned" {{ request('status') == 'loaned' ? 'selected' : '' }}>Pawned</option>
                     </select>
                 
                     <!-- 🔘 Buttons -->
@@ -44,21 +44,6 @@
                     </a>
                 
                 </form>
-
-        
-            <div class="flex gap-2">
-                <!-- Add Category Button -->
-                <a href="{{ route('categories.create') }}" 
-                    class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition">
-                     {{ __('+ Category') }}
-                </a>
-
-                <!-- Add Item Button -->
-                <a href="{{ route('items.create') }}" 
-                   class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
-                    {{ __('+ Add Item') }}
-                </a>
-            </div>
             
         </div>
     </x-slot>
@@ -102,10 +87,20 @@
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm">
                                             <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
-                                                @if($item->is_available) bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200
+                                                @if($item->item_status === 'for_sale') bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200
+                                                @elseif($item->item_status === 'stored') bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200
+                                                @elseif($item->item_status === 'sold') bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200
+                                                @elseif($item->item_status === 'renewed') bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200
+                                                @elseif($item->item_status === 'redeemed') bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200
                                                 @else bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200
                                                 @endif">
-                                                {{ $item->is_available ? 'Available' : 'In Loan' }}
+                                                @if($item->item_status === 'for_sale') For Sale
+                                                @elseif($item->item_status === 'stored') Pawned
+                                                @elseif($item->item_status === 'sold') Sold
+                                                @elseif($item->item_status === 'renewed') Renewed
+                                                @elseif($item->item_status === 'redeemed') Redeemed
+                                                @else {{ ucfirst($item->item_status) }}
+                                                @endif
                                             </span>
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm space-x-2">
@@ -129,10 +124,7 @@
             @else
                 <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
                     <div class="p-6 text-gray-900 dark:text-gray-100 text-center">
-                        <p class="text-gray-500 dark:text-gray-400">No items added yet.</p>
-                        <a href="{{ route('items.create') }}" class="inline-block mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
-                            Add First Item
-                        </a>
+                        <p class="text-gray-500 dark:text-gray-400">No items added yet. Items will appear here when a new pawn transaction is created.</p>
                     </div>
                 </div>
             @endif

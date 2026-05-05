@@ -70,7 +70,7 @@
                         <div class="space-y-6">
                             @foreach($safe->items as $item)
                                 @php
-                                    $latestLoan = $item->loans->first();
+                                    $latestTxn = $item->latest_transaction;
                                 @endphp
                                 <div class="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
                                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -115,39 +115,39 @@
 
                                         <!-- Customer & Status Information -->
                                         <div>
-                                            @if($latestLoan)
+                                            @if($latestTxn)
                                                 <h4 class="font-semibold text-lg mb-3 text-gray-900 dark:text-gray-100">Customer Information</h4>
                                                 <div class="space-y-2 text-sm bg-gray-50 dark:bg-gray-700 p-3 rounded">
                                                     <div>
                                                         <span class="font-medium text-gray-600 dark:text-gray-400">Name:</span>
-                                                        <span class="text-gray-900 dark:text-gray-100">{{ $latestLoan->customer->name }}</span>
+                                                        <span class="text-gray-900 dark:text-gray-100">{{ $latestTxn->customer->full_name }}</span>
                                                     </div>
                                                     <div>
                                                         <span class="font-medium text-gray-600 dark:text-gray-400">Email:</span>
-                                                        <span class="text-gray-900 dark:text-gray-100">{{ $latestLoan->customer->email }}</span>
+                                                        <span class="text-gray-900 dark:text-gray-100">{{ $latestTxn->customer->email ?? 'N/A' }}</span>
                                                     </div>
                                                     <div>
                                                         <span class="font-medium text-gray-600 dark:text-gray-400">Phone:</span>
-                                                        <span class="text-gray-900 dark:text-gray-100">{{ $latestLoan->customer->phone }}</span>
+                                                        <span class="text-gray-900 dark:text-gray-100">{{ $latestTxn->customer->phone_number }}</span>
                                                     </div>
                                                     <div>
                                                         <span class="font-medium text-gray-600 dark:text-gray-400">Address:</span>
-                                                        <span class="text-gray-900 dark:text-gray-100">{{ $latestLoan->customer->address }}</span>
+                                                        <span class="text-gray-900 dark:text-gray-100">{{ $latestTxn->customer->full_address }}</span>
                                                     </div>
                                                     <div class="pt-2 border-t border-gray-200 dark:border-gray-600">
-                                                        <span class="font-medium text-gray-600 dark:text-gray-400">Loan Status:</span>
+                                                        <span class="font-medium text-gray-600 dark:text-gray-400">Transaction Status:</span>
                                                         <span class="px-2 py-1 rounded text-xs font-semibold inline-block ml-2
-                                                            @if($latestLoan->status === 'active')
-                                                                bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200
-                                                            @elseif($latestLoan->status === 'paid')
+                                                            @if($latestTxn->status === 'active')
                                                                 bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200
-                                                            @elseif($latestLoan->status === 'forfeited')
-                                                                bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200
+                                                            @elseif($latestTxn->status === 'redeemed')
+                                                                bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200
+                                                            @elseif($latestTxn->status === 'renewed')
+                                                                bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200
                                                             @else
-                                                                bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200
+                                                                bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200
                                                             @endif
                                                         ">
-                                                            {{ ucfirst($latestLoan->status) }}
+                                                            {{ $latestTxn->status_label }}
                                                         </span>
                                                     </div>
                                                 </div>

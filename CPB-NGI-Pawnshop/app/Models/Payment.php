@@ -11,27 +11,57 @@ class Payment extends Model
     use Auditable;
 
     protected $fillable = [
-        'loan_id',
-        'amount',
+        'transaction_id',
+        'amount_paid',
+        'payment_type',
         'payment_method',
-        'status',
+        'payment_date',
+        'receipt_number',
         'notes',
-        'paid_at',
     ];
 
     protected function casts(): array
     {
         return [
-            'amount' => 'decimal:2',
-            'paid_at' => 'datetime',
+            'amount_paid' => 'decimal:2',
+            'payment_date' => 'datetime',
         ];
     }
 
     /**
-     * Get the loan this payment belongs to
+     * Boot method - auto-generate receipt number
      */
-    public function loan(): BelongsTo
+    protected static function boot()
     {
-        return $this->belongsTo(Loan::class);
+        parent::boot();
+
+        static::creating(function ($model) {
+            if (!$model->receipt_number) {
+                $date = now()->format('Ymd');
+                $count = static::whereDate('created_at', now())->count() + 1;
+                $model->receipt_number = 'RCT-' . $date . '-' . str_pad($count, 4, '0', STR_PAD_LEFT);
+            }
+        });
+    }
+
+    /**
+     * Get the transaction this payment belongs to
+     */
+    public function transaction(): BelongsTo
+    {
+        return $this->belongsTo(Transaction::class);
+    }
+
+    /**
+     * Get payment type label
+     */
+    public function getPaymentTypeLabelAttribute()
+    {
+        return match ($this->payment_type) {
+            'interest' => 'Interest',
+            'redemption' => 'Redemption',
+            'partial' => 'Partial',
+            default => $this->payment_type,
+        };
     }
 }

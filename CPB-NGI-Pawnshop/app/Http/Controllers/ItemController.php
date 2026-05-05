@@ -29,18 +29,13 @@ class ItemController extends Controller
             $query->where('category_id', $request->category);
         }
 
-        // 📊 Filter by availability
+        // 📊 Filter by status
         if ($request->filled('status')) {
             if ($request->status === 'available') {
                 $query->where('is_available', true);
             } elseif ($request->status === 'loaned') {
                 $query->where('is_available', false);
             }
-        }
-
-        // 📦 Default behavior (if no status filter = show all OR only available)
-        if (!$request->filled('status')) {
-            $query->where('is_available', true); // keep your original behavior
         }
 
         $items = $query->latest()->paginate(15)->withQueryString();
@@ -90,7 +85,7 @@ class ItemController extends Controller
      */
     public function show(Item $item)
     {
-        $item->load('category', 'loans');
+        $item->load('category', 'safe', 'transactions');
         return view('items.show', compact('item'));
     }
 
