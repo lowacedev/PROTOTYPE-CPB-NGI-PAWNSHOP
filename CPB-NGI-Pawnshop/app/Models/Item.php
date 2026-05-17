@@ -79,4 +79,37 @@ class Item extends Model
     {
         return $this->hasOne(SaleItem::class);
     }
+
+    /**
+     * Get the effective status based on maturity date if stored
+     */
+    public function getEffectiveStatusAttribute()
+    {
+        if ($this->item_status === 'stored') {
+            $transaction = $this->latest_transaction;
+            if ($transaction && $transaction->maturity_date) {
+                $maturityDate = \Carbon\Carbon::parse($transaction->maturity_date);
+                $auctionDate = $maturityDate->copy()->addMonths(3);
+                
+                if (now()->greaterThanOrEqualTo($auctionDate)) {
+                    return 'for_auction';
+                } elseif (now()->greaterThan($maturityDate)) {
+                    return 'past_maturity';
+                }
+            }
+        }
+        return $this->item_status;
+    }
+
+    /**
+     * Get the auction date calculated from the latest transaction
+     */
+    public function getAuctionDateAttribute()
+    {
+        $transaction = $this->latest_transaction;
+        if ($transaction && $transaction->maturity_date) {
+            return \Carbon\Carbon::parse($transaction->maturity_date)->addMonths(3);
+        }
+        return null;
+    }
 }

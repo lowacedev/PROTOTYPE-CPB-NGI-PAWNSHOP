@@ -17,7 +17,7 @@
                                 <x-input-error :messages="$errors->get('first_name')" class="mt-2" />
                             </div>
                             <div>
-                                <x-input-label for="middle_name" :value="__('Middle Name')" />
+                                <x-input-label for="middle_name" :value="__('Middle Name (Optional)')" />
                                 <x-text-input id="middle_name" class="block mt-1 w-full" type="text" name="middle_name" :value="old('middle_name', $customer->middle_name)" />
                             </div>
                             <div>
@@ -28,12 +28,13 @@
                         </div>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
-                                <x-input-label for="email" :value="__('Email (optional)')" />
+                                <x-input-label for="email" :value="__('Email (Optional)')" />
                                 <x-text-input id="email" class="block mt-1 w-full" type="email" name="email" :value="old('email', $customer->email)" />
                             </div>
                             <div>
                                 <x-input-label for="phone_number" :value="__('Phone Number')" />
-                                <x-text-input id="phone_number" class="block mt-1 w-full" type="text" name="phone_number" :value="old('phone_number', $customer->phone_number)" required />
+                                <x-text-input id="phone_number" class="block mt-1 w-full" type="text" name="phone_number" :value="old('phone_number', $customer->phone_number)" required pattern="^(09|\+639)\d{9}$" placeholder="e.g. 09123456789 or +639123456789" title="Valid Philippine format: 09123456789 or +639123456789" />
+                                <x-input-error :messages="$errors->get('phone_number')" class="mt-2" />
                             </div>
                         </div>
                         <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 border-b border-gray-200 dark:border-gray-700 pb-2 pt-4">Address</h3>
@@ -67,7 +68,7 @@
                             </div>
                         </div>
                         <div>
-                            <x-input-label for="address_line" :value="__('Street / Building (optional)')" />
+                            <x-input-label for="address_line" :value="__('Street / Building (Optional)')" />
                             <x-text-input id="address_line" class="block mt-1 w-full" type="text" name="address_line" :value="old('address_line', $customer->address_line)" />
                         </div>
                         <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 border-b border-gray-200 dark:border-gray-700 pb-2 pt-4">ID Verification</h3>
@@ -87,7 +88,7 @@
                             </div>
                         </div>
                         <div>
-                            <x-input-label for="id_image" :value="__('Upload New ID Image')" />
+                            <x-input-label for="id_image" :value="__('Upload New ID Image (Optional)')" />
                             @if($customer->id_image_path)
                                 <div class="mb-2"><img src="{{ asset('storage/' . $customer->id_image_path) }}" alt="Current ID" class="h-24 rounded border dark:border-gray-600"></div>
                             @endif
@@ -101,7 +102,7 @@
                             </div>
                         </div>
                         <div>
-                            <x-input-label for="notes" :value="__('Notes')" />
+                            <x-input-label for="notes" :value="__('Notes (Optional)')" />
                             <textarea id="notes" name="notes" rows="3" class="block mt-1 w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-md shadow-sm">{{ old('notes', $customer->notes) }}</textarea>
                         </div>
                         <div class="flex gap-4">

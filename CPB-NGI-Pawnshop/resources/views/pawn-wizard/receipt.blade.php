@@ -57,7 +57,15 @@
                 </div>
                 <div class="flex justify-between">
                     <span>Interest Amount:</span>
-                    <span>₱{{ number_format($transaction->calculateInterest(), 2) }}</span>
+                    <span>₱{{ number_format($transaction->calculateAdvanceInterest(), 2) }}</span>
+                </div>
+                <div class="flex justify-between border-b-2 border-gray-300 pb-2 mb-2">
+                    <span>Service Charge:</span>
+                    <span>₱5.00</span>
+                </div>
+                <div class="flex justify-between mt-2 font-bold text-lg text-green-700">
+                    <span>Net Proceeds:</span>
+                    <span>₱{{ number_format($transaction->loan_amount - $transaction->calculateAdvanceInterest() - 5, 2) }}</span>
                 </div>
                 <div class="flex justify-between mt-2 font-bold text-base text-red-600">
                     <span>Maturity Date:</span>

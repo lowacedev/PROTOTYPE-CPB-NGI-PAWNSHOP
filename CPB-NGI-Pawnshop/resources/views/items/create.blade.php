@@ -59,19 +59,19 @@
                         </div>
 
                         <div>
-                            <x-input-label for="description" :value="__('Description')" />
+                            <x-input-label for="description" :value="__('Description (Optional)')" />
                             <textarea id="description" name="description" rows="3" class="block mt-1 w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-md shadow-sm">{{ old('description') }}</textarea>
                             <x-input-error :messages="$errors->get('description')" class="mt-2" />
                         </div>
 
                         <div>
-                            <x-input-label for="location" :value="__('Storage Location')" />
+                            <x-input-label for="location" :value="__('Storage Location (Optional)')" />
                             <x-text-input id="location" class="block mt-1 w-full" type="text" name="location" :value="old('location')" />
                             <x-input-error :messages="$errors->get('location')" class="mt-2" />
                         </div>
 
                         <div>
-                            <x-input-label for="notes" :value="__('Notes')" />
+                            <x-input-label for="notes" :value="__('Notes (Optional)')" />
                             <textarea id="notes" name="notes" rows="3" class="block mt-1 w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-md shadow-sm">{{ old('notes') }}</textarea>
                             <x-input-error :messages="$errors->get('notes')" class="mt-2" />
                         </div>

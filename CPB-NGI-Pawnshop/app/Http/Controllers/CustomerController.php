@@ -93,11 +93,12 @@ class CustomerController extends Controller
         return redirect()->route('customers.index')->with('success', 'Customer updated successfully!');
     }
 
-    /**
-     * Remove the specified customer from storage.
-     */
     public function destroy(Customer $customer)
     {
+        if ($customer->transactions()->exists()) {
+            return redirect()->route('customers.index')->with('error', 'Cannot delete customer with existing transactions.');
+        }
+
         // Delete ID image if exists
         if ($customer->id_image_path) {
             Storage::disk('public')->delete($customer->id_image_path);

@@ -3,7 +3,6 @@
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\DB;
 use App\Models\Region;
 use App\Models\Province;
@@ -12,69 +11,101 @@ use App\Models\City;
 class LocationSeeder extends Seeder
 {
     /**
-     * Seed Philippine location data from PSGC Cloud API.
-     * API docs: https://psgc.cloud
+     * Seed Philippine location data from local JSON.
      */
     public function run(): void
     {
-        $this->command->info('Fetching regions from PSGC API...');
-        $regions = Http::retry(3, 1000)->get('https://psgc.cloud/api/regions')->json();
+        $this->command->info('Loading location data from local JSON file...');
+        $jsonPath = database_path('data/philippine_locations.json');
+        
+        if (!file_exists($jsonPath)) {
+            $this->command->error('Local JSON file not found at: ' . $jsonPath);
+            return;
+        }
 
-        foreach ($regions as $regionData) {
-            // Skip if region already exists to allow resuming
-            $region = Region::where('code', $regionData['code'])->first();
-            
-            if ($region) {
-                $this->command->info("  Skipping Region: {$region->name} (Already seeded)");
-                continue;
-            }
+        $jsonString = file_get_contents($jsonPath);
+        $data = json_decode($jsonString, true);
 
+        if (!$data) {
+            $this->command->error('Failed to parse JSON file.');
+            return;
+        }
+
+        // Disable foreign key checks for faster truncate/insert (if needed)
+        // Note: Using truncate might cause issues if other tables reference these, 
+        // so we'll just check if regions exist and skip if they do.
+        if (Region::count() > 10) {
+            $this->command->info('Location data already seeded. Skipping.');
+            return;
+        }
+
+        // To prevent duplicate keys, we can just clear existing and re-seed
+        // But doing it safely.
+        DB::statement('SET FOREIGN_KEY_CHECKS=0;');
+        DB::table('barangays')->truncate();
+        City::truncate();
+        Province::truncate();
+        Region::truncate();
+        DB::statement('SET FOREIGN_KEY_CHECKS=1;');
+
+        $now = now();
+        $barangayRows = [];
+
+        foreach ($data as $regionCode => $regionInfo) {
+            $regionName = $regionInfo['region_name'];
             $region = Region::create([
-                'name' => $regionData['name'],
-                'code' => $regionData['code'],
+                'name' => $regionName,
+                'code' => $regionCode,
             ]);
-            $this->command->info("  Seeding Region: {$region->name}");
+            $this->command->info("  Seeded Region: {$regionName}");
 
-            // Fetch provinces for this region
-            $provinces = Http::retry(3, 1000)->get("https://psgc.cloud/api/regions/{$regionData['code']}/provinces")->json();
+            if (isset($regionInfo['province_list'])) {
+                foreach ($regionInfo['province_list'] as $provinceName => $provinceInfo) {
+                    // Handle special cases in the JSON where province is a string instead of array
+                    if (!is_array($provinceInfo)) continue;
 
-            foreach ($provinces as $provData) {
-                $province = Province::create([
-                    'region_id' => $region->id,
-                    'name'      => $provData['name'],
-                    'code'      => $provData['code'],
-                ]);
-
-                // Fetch cities/municipalities for this province
-                $cities = Http::retry(3, 1000)->get("https://psgc.cloud/api/provinces/{$provData['code']}/cities-municipalities")->json();
-
-                foreach ($cities as $cityData) {
-                    $city = City::create([
-                        'province_id' => $province->id,
-                        'name'        => $cityData['name'],
-                        'code'        => $cityData['code'],
+                    $province = Province::create([
+                        'region_id' => $region->id,
+                        'name'      => $provinceName,
+                        'code'      => substr(md5($provinceName . $region->id), 0, 20),
                     ]);
 
-                    // Fetch barangays for this city
-                    $barangays = Http::retry(3, 1000)->get("https://psgc.cloud/api/cities-municipalities/{$cityData['code']}/barangays")->json();
+                    if (isset($provinceInfo['municipality_list'])) {
+                        foreach ($provinceInfo['municipality_list'] as $cityName => $cityInfo) {
+                            if (!is_array($cityInfo)) continue;
 
-                    if (!empty($barangays)) {
-                        $rows = [];
-                        $now = now();
-                        foreach ($barangays as $brgyData) {
-                            $rows[] = [
-                                'city_id'    => $city->id,
-                                'name'       => $brgyData['name'],
-                                'code'       => $brgyData['code'],
-                                'created_at' => $now,
-                                'updated_at' => $now,
-                            ];
+                            $city = City::create([
+                                'province_id' => $province->id,
+                                'name'        => $cityName,
+                                'code'        => substr(md5($cityName . $province->id), 0, 20),
+                            ]);
+
+                            if (isset($cityInfo['barangay_list'])) {
+                                foreach ($cityInfo['barangay_list'] as $barangayName) {
+                                    $barangayRows[] = [
+                                        'city_id'    => $city->id,
+                                        'name'       => $barangayName,
+                                        'code'       => substr(md5($barangayName . $city->id), 0, 20),
+                                        'created_at' => $now,
+                                        'updated_at' => $now,
+                                    ];
+
+                                    // Chunk inserts to prevent memory issues
+                                    if (count($barangayRows) >= 1000) {
+                                        DB::table('barangays')->insert($barangayRows);
+                                        $barangayRows = [];
+                                    }
+                                }
+                            }
                         }
-                        // Bulk insert barangays for performance
-                        DB::table('barangays')->insert($rows);
                     }
                 }
             }
+        }
+
+        // Insert remaining barangays
+        if (count($barangayRows) > 0) {
+            DB::table('barangays')->insert($barangayRows);
         }
 
         $this->command->info('Location seeding complete!');

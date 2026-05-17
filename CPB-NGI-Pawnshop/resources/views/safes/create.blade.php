@@ -44,7 +44,7 @@
 
                         <!-- Description -->
                         <div>
-                            <x-input-label for="description" :value="__('Description')" />
+                            <x-input-label for="description" :value="__('Description (Optional)')" />
                             <textarea id="description" name="description" class="block mt-1 w-full rounded-md shadow-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300" rows="4">{{ old('description') }}</textarea>
                             <x-input-error :messages="$errors->get('description')" class="mt-2" />
                         </div>
@@ -68,7 +68,7 @@
 
                         <!-- Notes -->
                         <div>
-                            <x-input-label for="notes" :value="__('Notes')" />
+                            <x-input-label for="notes" :value="__('Notes (Optional)')" />
                             <textarea id="notes" name="notes" class="block mt-1 w-full rounded-md shadow-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300" rows="4">{{ old('notes') }}</textarea>
                             <x-input-error :messages="$errors->get('notes')" class="mt-2" />
                         </div>

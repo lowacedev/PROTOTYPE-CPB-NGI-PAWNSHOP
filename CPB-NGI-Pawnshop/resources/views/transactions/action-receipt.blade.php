@@ -20,7 +20,7 @@
         <div class="bg-white w-full max-w-sm shadow-xl p-6 text-gray-800" id="printable-receipt">
             <div class="text-center mb-6 border-b-2 border-dashed border-gray-300 pb-4">
                 <h1 class="text-2xl font-bold uppercase tracking-wider">CPB-NGI Pawnshop</h1>
-                <p class="text-sm">Bolton Branch</p>
+                <p class="text-sm">Poblacion District 8000 Davao City, Davao Del Sur Philippines</p>
                 <p class="text-xs mt-2 font-bold uppercase">{{ $payment->payment_type_label }} RECEIPT</p>
                 <p class="text-xs mt-1">Receipt #: <span class="font-bold">{{ $payment->receipt_number }}</span></p>
                 <p class="text-xs">Ticket #: <span class="font-bold">{{ $payment->transaction->pawn_ticket_number }}</span></p>
@@ -45,7 +45,29 @@
             </div>
 
             <div class="space-y-2 mt-4 text-sm border-b-2 border-dashed border-gray-300 pb-4">
-                <div class="flex justify-between font-bold text-lg">
+                @if($payment->principal_paid > 0)
+                <div class="flex justify-between">
+                    <span>Principal:</span>
+                    <span>₱{{ number_format($payment->principal_paid, 2) }}</span>
+                </div>
+                @endif
+                <div class="flex justify-between">
+                    <span>Interest:</span>
+                    <span>₱{{ number_format($payment->interest_paid, 2) }}</span>
+                </div>
+                @if($payment->penalty_paid > 0)
+                <div class="flex justify-between text-red-600">
+                    <span>Penalty:</span>
+                    <span>₱{{ number_format($payment->penalty_paid, 2) }}</span>
+                </div>
+                @endif
+                @if($payment->service_charge > 0)
+                <div class="flex justify-between">
+                    <span>Service Charge:</span>
+                    <span>₱{{ number_format($payment->service_charge, 2) }}</span>
+                </div>
+                @endif
+                <div class="flex justify-between font-bold text-lg border-t border-dashed border-gray-300 pt-2 mt-2">
                     <span>Amount Paid:</span>
                     <span>₱{{ number_format($payment->amount_paid, 2) }}</span>
                 </div>

@@ -50,6 +50,34 @@
 
             <!-- Page Content -->
             <main>
+                @if (session('success') || session('error') || session('warning') || session('info'))
+                    <div class="max-w-7xl mx-auto pt-6 px-4 sm:px-6 lg:px-8">
+                        @if (session('success'))
+                            <div class="p-4 mb-4 text-sm text-green-800 rounded-lg bg-green-50 dark:bg-gray-800 dark:text-green-400 border border-green-300 dark:border-green-800" role="alert">
+                                {{ session('success') }}
+                            </div>
+                        @endif
+                        
+                        @if (session('error'))
+                            <div class="p-4 mb-4 text-sm text-red-800 rounded-lg bg-red-50 dark:bg-gray-800 dark:text-red-400 border border-red-300 dark:border-red-800" role="alert">
+                                {{ session('error') }}
+                            </div>
+                        @endif
+
+                        @if (session('warning'))
+                            <div class="p-4 mb-4 text-sm text-yellow-800 rounded-lg bg-yellow-50 dark:bg-gray-800 dark:text-yellow-300 border border-yellow-300 dark:border-yellow-800" role="alert">
+                                {{ session('warning') }}
+                            </div>
+                        @endif
+
+                        @if (session('info'))
+                            <div class="p-4 mb-4 text-sm text-blue-800 rounded-lg bg-blue-50 dark:bg-gray-800 dark:text-blue-400 border border-blue-300 dark:border-blue-800" role="alert">
+                                {{ session('info') }}
+                            </div>
+                        @endif
+                    </div>
+                @endif
+
                 {{ $slot }}
             </main>
         </div>

@@ -8,11 +8,6 @@
     <div class="py-12">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
             
-            @if(session('error'))
-                <div class="mb-4 bg-red-100 dark:bg-red-900 border border-red-400 dark:border-red-700 text-red-700 dark:text-red-200 px-4 py-3 rounded relative">
-                    {{ session('error') }}
-                </div>
-            @endif
 
             <!-- Search Box -->
             <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg mb-6 p-6">
@@ -102,8 +97,10 @@
                                     <td class="px-6 py-4 text-sm dark:text-gray-200">${maturity}</td>
                                     <td class="px-6 py-4 text-sm"><span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${statusClass}">${txn.status.toUpperCase()}</span></td>
                                     <td class="px-6 py-4 text-sm font-medium space-x-2">
-                                        <a href="/transactions/${txn.id}/renew" class="text-white bg-yellow-500 hover:bg-yellow-600 px-3 py-1 rounded text-xs transition">Renew</a>
-                                        <a href="/transactions/${txn.id}/redeem" class="text-white bg-blue-600 hover:bg-blue-700 px-3 py-1 rounded text-xs transition">Redeem</a>
+                                        ${(txn.status === 'active' || txn.status === 'renewed') ? `
+                                            <a href="/transactions/${txn.id}/renew" class="text-white bg-yellow-500 hover:bg-yellow-600 px-3 py-1 rounded text-xs transition">Renew</a>
+                                            <a href="/transactions/${txn.id}/redeem" class="text-white bg-blue-600 hover:bg-blue-700 px-3 py-1 rounded text-xs transition">Redeem</a>
+                                        ` : `<span class="text-gray-400 text-xs italic">Not available</span>`}
                                     </td>
                                 `;
                                 resultsBody.appendChild(tr);

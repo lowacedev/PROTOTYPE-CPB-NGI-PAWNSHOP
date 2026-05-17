@@ -71,13 +71,13 @@ class CategoryController extends Controller
         return redirect()->route('categories.show', $category)->with('success', 'Category updated successfully!');
     }
 
-    /**
-     * Remove the specified category from storage.
-     */
     public function destroy(Category $category)
     {
-        if ($category->items()->count() > 0) {
-            return redirect()->route('categories.index')->with('error', 'Cannot delete category with items');
+        $hasTransactions = $category->items()->whereHas('transactions')->exists() || 
+                           $category->items()->whereHas('saleItem')->exists();
+
+        if ($hasTransactions) {
+            return redirect()->route('categories.index')->with('error', 'Cannot delete category because it contains items with existing transactions.');
         }
 
         $category->delete();

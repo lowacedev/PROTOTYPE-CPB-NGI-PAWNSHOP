@@ -65,7 +65,8 @@
     <div class="header">
         <h1>CPB-NGI Pawnshop</h1>
         <p>{{ $title }}</p>
-        <p>Generated on: {{ now()->format('F d, Y h:i A') }}</p>
+        <p>Run Date: {{ now()->format('M d, Y h:i A') }}</p>
+        <p>Run By: {{ auth()->user()->name ?? 'System User' }}</p>
     </div>
 
     @yield('content')

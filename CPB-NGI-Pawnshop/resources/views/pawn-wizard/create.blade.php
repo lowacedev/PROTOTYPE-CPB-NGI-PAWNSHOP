@@ -99,89 +99,106 @@
 
                             <!-- NEW CUSTOMER FORM -->
                             <div id="new-customer-section" class="hidden space-y-6">
+                                <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 border-b border-gray-200 dark:border-gray-700 pb-2">Personal Information</h3>
                                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                                     <div>
-                                        <x-input-label for="first_name" :value="__('First Name *')" />
-                                        <x-text-input id="first_name" name="first_name" class="block mt-1 w-full" type="text" :value="old('first_name')" />
+                                        <x-input-label for="first_name" :value="__('First Name')" />
+                                        <x-text-input id="first_name" name="first_name" class="block mt-1 w-full" type="text" :value="old('first_name')" required />
+                                        <x-input-error :messages="$errors->get('first_name')" class="mt-2" />
                                     </div>
                                     <div>
-                                        <x-input-label for="middle_name" :value="__('Middle Name')" />
+                                        <x-input-label for="middle_name" :value="__('Middle Name (Optional)')" />
                                         <x-text-input id="middle_name" name="middle_name" class="block mt-1 w-full" type="text" :value="old('middle_name')" />
+                                        <x-input-error :messages="$errors->get('middle_name')" class="mt-2" />
                                     </div>
                                     <div>
-                                        <x-input-label for="last_name" :value="__('Last Name *')" />
-                                        <x-text-input id="last_name" name="last_name" class="block mt-1 w-full" type="text" :value="old('last_name')" />
+                                        <x-input-label for="last_name" :value="__('Last Name')" />
+                                        <x-text-input id="last_name" name="last_name" class="block mt-1 w-full" type="text" :value="old('last_name')" required />
+                                        <x-input-error :messages="$errors->get('last_name')" class="mt-2" />
                                     </div>
                                 </div>
 
                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div>
-                                        <x-input-label for="phone_number" :value="__('Phone Number *')" />
-                                        <x-text-input id="phone_number" name="phone_number" class="block mt-1 w-full" type="text" :value="old('phone_number')" />
-                                    </div>
                                     <div>
                                         <x-input-label for="email" :value="__('Email (Optional)')" />
                                         <x-text-input id="email" name="email" class="block mt-1 w-full" type="email" :value="old('email')" />
+                                        <x-input-error :messages="$errors->get('email')" class="mt-2" />
+                                    </div>
+                                    <div>
+                                        <x-input-label for="phone_number" :value="__('Phone Number')" />
+                                        <x-text-input id="phone_number" name="phone_number" class="block mt-1 w-full" type="text" :value="old('phone_number')" required />
+                                        <x-input-error :messages="$errors->get('phone_number')" class="mt-2" />
                                     </div>
                                 </div>
 
-                                <h4 class="font-semibold text-gray-700 dark:text-gray-300 border-b dark:border-gray-700 pb-2">Address</h4>
+                                <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 border-b border-gray-200 dark:border-gray-700 pb-2 pt-4">Address</h3>
                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div>
-                                        <x-input-label for="region_id" :value="__('Region *')" />
-                                        <select id="region_id" name="region_id" class="block mt-1 w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 rounded-md">
+                                        <x-input-label for="region_id" :value="__('Region')" />
+                                        <select id="region_id" name="region_id" class="block mt-1 w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-md shadow-sm" required>
                                             <option value="">Select Region</option>
                                             @foreach($regions as $region)
-                                                <option value="{{ $region->id }}">{{ $region->name }}</option>
+                                                <option value="{{ $region->id }}" @selected(old('region_id') == $region->id)>{{ $region->name }}</option>
                                             @endforeach
                                         </select>
+                                        <x-input-error :messages="$errors->get('region_id')" class="mt-2" />
                                     </div>
                                     <div>
-                                        <x-input-label for="province_id" :value="__('Province *')" />
-                                        <select id="province_id" name="province_id" class="block mt-1 w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 rounded-md" disabled>
+                                        <x-input-label for="province_id" :value="__('Province')" />
+                                        <select id="province_id" name="province_id" class="block mt-1 w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-md shadow-sm" required disabled>
                                             <option value="">Select Province</option>
                                         </select>
+                                        <x-input-error :messages="$errors->get('province_id')" class="mt-2" />
                                     </div>
                                     <div>
-                                        <x-input-label for="city_id" :value="__('City *')" />
-                                        <select id="city_id" name="city_id" class="block mt-1 w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 rounded-md" disabled>
+                                        <x-input-label for="city_id" :value="__('City / Municipality')" />
+                                        <select id="city_id" name="city_id" class="block mt-1 w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-md shadow-sm" required disabled>
                                             <option value="">Select City</option>
                                         </select>
+                                        <x-input-error :messages="$errors->get('city_id')" class="mt-2" />
                                     </div>
                                     <div>
-                                        <x-input-label for="barangay_id" :value="__('Barangay *')" />
-                                        <select id="barangay_id" name="barangay_id" class="block mt-1 w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 rounded-md" disabled>
+                                        <x-input-label for="barangay_id" :value="__('Barangay')" />
+                                        <select id="barangay_id" name="barangay_id" class="block mt-1 w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-md shadow-sm" required disabled>
                                             <option value="">Select Barangay</option>
                                         </select>
+                                        <x-input-error :messages="$errors->get('barangay_id')" class="mt-2" />
                                     </div>
                                 </div>
                                 <div>
-                                    <x-input-label for="address_line" :value="__('Detailed Address')" />
+                                    <x-input-label for="address_line" :value="__('Street / Building (Optional)')" />
                                     <x-text-input id="address_line" name="address_line" class="block mt-1 w-full" type="text" :value="old('address_line')" />
                                 </div>
 
-                                <h4 class="font-semibold text-gray-700 dark:text-gray-300 border-b dark:border-gray-700 pb-2">ID Verification</h4>
+                                <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 border-b border-gray-200 dark:border-gray-700 pb-2 pt-4">ID Verification</h3>
                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div>
-                                        <x-input-label for="id_type" :value="__('ID Type *')" />
-                                        <select id="id_type" name="id_type" class="block mt-1 w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 rounded-md">
+                                        <x-input-label for="id_type" :value="__('ID Type')" />
+                                        <select id="id_type" name="id_type" class="block mt-1 w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-md shadow-sm" required>
                                             <option value="">Select ID Type</option>
-                                            <option value="national_id">National ID</option>
-                                            <option value="passport">Passport</option>
-                                            <option value="driver_license">Driver's License</option>
-                                            <option value="sss">SSS</option>
-                                            <option value="philhealth">PhilHealth</option>
-                                            <option value="voters_id">Voter's ID</option>
+                                            <option value="national_id" @selected(old('id_type')==='national_id')>National ID</option>
+                                            <option value="passport" @selected(old('id_type')==='passport')>Passport</option>
+                                            <option value="driver_license" @selected(old('id_type')==='driver_license')>Driver's License</option>
+                                            <option value="sss" @selected(old('id_type')==='sss')>SSS</option>
+                                            <option value="philhealth" @selected(old('id_type')==='philhealth')>PhilHealth</option>
+                                            <option value="voters_id" @selected(old('id_type')==='voters_id')>Voter's ID</option>
                                         </select>
+                                        <x-input-error :messages="$errors->get('id_type')" class="mt-2" />
                                     </div>
                                     <div>
-                                        <x-input-label for="id_number" :value="__('ID Number *')" />
-                                        <x-text-input id="id_number" name="id_number" class="block mt-1 w-full" type="text" :value="old('id_number')" />
+                                        <x-input-label for="id_number" :value="__('ID Number')" />
+                                        <x-text-input id="id_number" name="id_number" class="block mt-1 w-full" type="text" :value="old('id_number')" required />
+                                        <x-input-error :messages="$errors->get('id_number')" class="mt-2" />
                                     </div>
-                                    <div class="md:col-span-2">
-                                        <x-input-label for="id_image" :value="__('Upload ID Image *')" />
-                                        <input id="id_image" name="id_image" type="file" accept="image/*" class="block mt-1 w-full text-sm dark:text-gray-300">
-                                    </div>
+                                </div>
+                                <div>
+                                    <x-input-label for="id_image" :value="__('Upload ID Image (Optional)')" />
+                                    <input id="id_image" type="file" name="id_image" accept="image/*" class="block mt-1 w-full text-sm text-gray-500 dark:text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 dark:file:bg-gray-700 dark:file:text-gray-300" />
+                                    <x-input-error :messages="$errors->get('id_image')" class="mt-2" />
+                                </div>
+                                <div>
+                                    <x-input-label for="notes" :value="__('Notes (Optional)')" />
+                                    <textarea id="notes" name="notes" rows="3" class="block mt-1 w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-md shadow-sm">{{ old('notes') }}</textarea>
                                 </div>
                             </div>
                         </div>
@@ -191,10 +208,6 @@
                             <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-4">Step 2: Item Details</h3>
                             <div class="space-y-4">
                                 <div>
-                                    <x-input-label for="item_name" :value="__('Item Name *')" />
-                                    <x-text-input id="item_name" name="item_name" class="block mt-1 w-full" type="text" :value="old('item_name')" />
-                                </div>
-                                <div>
                                     <x-input-label for="category_id" :value="__('Category *')" />
                                     <select id="category_id" name="category_id" class="block mt-1 w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 rounded-md">
                                         <option value="">Select Category</option>
@@ -202,6 +215,12 @@
                                             <option value="{{ $category->id }}" {{ old('category_id') == $category->id ? 'selected' : '' }}>{{ $category->name }}</option>
                                         @endforeach
                                     </select>
+                                </div>
+                                <div class="relative">
+                                    <x-input-label for="item_name" :value="__('Item Name *')" />
+                                    <x-text-input id="item_name" name="item_name" class="block mt-1 w-full" type="text" :value="old('item_name')" placeholder="Type or select an item..." autocomplete="off" />
+                                    <div id="item-name-suggestions" class="absolute z-50 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg hidden max-h-48 overflow-y-auto"></div>
+                                    <p class="text-xs text-gray-500 mt-1">Suggestions from existing items will appear as you type.</p>
                                 </div>
                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div>
@@ -220,7 +239,7 @@
                                     </div>
                                 </div>
                                 <div>
-                                    <x-input-label for="item_description" :value="__('Description / Serial Numbers / Defects')" />
+                                    <x-input-label for="item_description" :value="__('Description / Serial Numbers / Defects (Optional)')" />
                                     <textarea id="item_description" name="item_description" rows="3" class="block mt-1 w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 rounded-md">{{ old('item_description') }}</textarea>
                                 </div>
                             </div>
@@ -266,6 +285,14 @@
                                             <span class="text-blue-800 dark:text-blue-400">Total Interest:</span>
                                             <span class="font-semibold text-blue-900 dark:text-blue-300" id="display_interest">₱0.00</span>
                                         </div>
+                                        <div class="flex justify-between">
+                                            <span class="text-blue-800 dark:text-blue-400">Service Charge:</span>
+                                            <span class="font-semibold text-blue-900 dark:text-blue-300">₱5.00</span>
+                                        </div>
+                                        <div class="flex justify-between items-center text-lg mt-2 pt-2 border-t border-blue-200 dark:border-blue-800">
+                                            <span class="font-bold text-blue-900 dark:text-blue-300">Net Proceeds:</span>
+                                            <span class="font-bold text-2xl text-green-600 dark:text-green-400" id="display_net_proceeds">₱0.00</span>
+                                        </div>
                                         <div class="flex justify-between border-t border-blue-200 dark:border-blue-800 pt-2">
                                             <span class="font-bold text-blue-900 dark:text-blue-300">Maturity Date:</span>
                                             <span class="font-bold text-blue-900 dark:text-blue-300" id="display_maturity">-</span>
@@ -291,8 +318,12 @@
                                 </div>
                                 <div class="grid grid-cols-2 gap-4">
                                     <div>
-                                        <h4 class="font-bold text-gray-700 dark:text-gray-300 uppercase text-sm border-b dark:border-gray-600 pb-1 mb-2">Loan Amount</h4>
-                                        <p class="text-xl font-bold text-green-600 dark:text-green-400" id="rev_loan"></p>
+                                        <h4 class="font-bold text-gray-700 dark:text-gray-300 uppercase text-sm border-b dark:border-gray-600 pb-1 mb-2">Principal Loan</h4>
+                                        <p class="text-xl font-bold text-blue-600 dark:text-blue-400" id="rev_loan"></p>
+                                    </div>
+                                    <div>
+                                        <h4 class="font-bold text-gray-700 dark:text-gray-300 uppercase text-sm border-b dark:border-gray-600 pb-1 mb-2">Net Proceeds</h4>
+                                        <p class="text-xl font-bold text-green-600 dark:text-green-400" id="rev_net_proceeds"></p>
                                     </div>
                                     <div>
                                         <h4 class="font-bold text-gray-700 dark:text-gray-300 uppercase text-sm border-b dark:border-gray-600 pb-1 mb-2">Maturity Date</h4>
@@ -385,12 +416,28 @@
         // -- Customer Logic --
         function toggleCustomerMode() {
             const type = document.querySelector('input[name="customer_type"]:checked').value;
+            const newSection = document.getElementById('new-customer-section');
+            const existingSection = document.getElementById('existing-customer-section');
+            
+            // IDs of fields that should be required only when "new customer" is active
+            const newCustRequiredFields = ['first_name', 'last_name', 'phone_number', 'region_id', 'province_id', 'city_id', 'barangay_id', 'id_type', 'id_number'];
+
             if (type === 'existing') {
-                document.getElementById('existing-customer-section').classList.remove('hidden');
-                document.getElementById('new-customer-section').classList.add('hidden');
+                existingSection.classList.remove('hidden');
+                newSection.classList.add('hidden');
+                // Remove required from hidden new-customer fields so they don't block submit
+                newCustRequiredFields.forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) el.removeAttribute('required');
+                });
             } else {
-                document.getElementById('existing-customer-section').classList.add('hidden');
-                document.getElementById('new-customer-section').classList.remove('hidden');
+                existingSection.classList.add('hidden');
+                newSection.classList.remove('hidden');
+                // Restore required on new-customer fields
+                newCustRequiredFields.forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) el.setAttribute('required', 'required');
+                });
             }
         }
 
@@ -455,13 +502,27 @@
 
         // -- Computation Logic --
         function computeLoan() {
+            const termInput = document.getElementById('term_days');
+            let days = parseInt(termInput.value) || 0;
+            
+            if (days > 365) {
+                days = 365;
+                termInput.value = 365;
+                alert('Maximum loan term is 365 days.');
+            }
+
             const assessed = parseFloat(document.getElementById('assessed_value').value) || 0;
             const pct = parseFloat(document.getElementById('loan_percentage').value) || 0;
             const rate = parseFloat(document.getElementById('interest_rate').value) || 0;
-            const days = parseInt(document.getElementById('term_days').value) || 0;
 
             const loanAmt = assessed * (pct / 100);
-            const interest = loanAmt * (rate / 100);
+            
+            // Advance interest is multiplied by the number of months (terms)
+            const terms = Math.max(1, Math.ceil(days / 30));
+            const interest = loanAmt * (rate / 100) * terms;
+            
+            const serviceCharge = 5.00;
+            const netProceeds = loanAmt - interest - serviceCharge;
             
             // Calculate maturity date
             const maturityDate = new Date();
@@ -472,6 +533,7 @@
             document.getElementById('display_principal').textContent = `₱${loanAmt.toFixed(2)}`;
             document.getElementById('loan_amount').value = loanAmt.toFixed(2);
             document.getElementById('display_interest').textContent = `₱${interest.toFixed(2)}`;
+            document.getElementById('display_net_proceeds').textContent = `₱${netProceeds.toFixed(2)}`;
             document.getElementById('display_maturity').textContent = dateStr;
         }
 
@@ -494,6 +556,7 @@
 
             // Loan
             document.getElementById('rev_loan').textContent = document.getElementById('display_principal').textContent;
+            document.getElementById('rev_net_proceeds').textContent = document.getElementById('display_net_proceeds').textContent;
             document.getElementById('rev_maturity').textContent = document.getElementById('display_maturity').textContent;
         }
 
@@ -501,6 +564,70 @@
         document.addEventListener('DOMContentLoaded', () => {
             toggleCustomerMode();
             computeLoan();
+            
+            // Autocomplete for Item Name based on Category
+            const catSelect = document.getElementById('category_id');
+            const itemNameInput = document.getElementById('item_name');
+            const suggestionsBox = document.getElementById('item-name-suggestions');
+            let cachedItemNames = [];
+            
+            function loadItemNames() {
+                const catId = catSelect.value;
+                cachedItemNames = [];
+                suggestionsBox.innerHTML = '';
+                suggestionsBox.classList.add('hidden');
+                if (catId) {
+                    fetch(`/api/items/names/${catId}`)
+                        .then(res => res.json())
+                        .then(names => {
+                            cachedItemNames = names;
+                            // Show all suggestions immediately if the input has focus
+                            if (document.activeElement === itemNameInput) {
+                                filterSuggestions();
+                            }
+                        })
+                        .catch(err => console.error('Failed to load item names:', err));
+                }
+            }
+
+            function filterSuggestions() {
+                const query = itemNameInput.value.toLowerCase().trim();
+                suggestionsBox.innerHTML = '';
+
+                const filtered = cachedItemNames.filter(name => 
+                    name.toLowerCase().includes(query)
+                );
+
+                if (filtered.length === 0) {
+                    suggestionsBox.classList.add('hidden');
+                    return;
+                }
+
+                filtered.forEach(name => {
+                    const div = document.createElement('div');
+                    div.className = 'p-3 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer border-b dark:border-gray-700 last:border-0 text-sm dark:text-white';
+                    div.textContent = name;
+                    div.addEventListener('click', () => {
+                        itemNameInput.value = name;
+                        suggestionsBox.classList.add('hidden');
+                    });
+                    suggestionsBox.appendChild(div);
+                });
+                suggestionsBox.classList.remove('hidden');
+            }
+
+            itemNameInput.addEventListener('input', filterSuggestions);
+            itemNameInput.addEventListener('focus', filterSuggestions);
+            document.addEventListener('click', function(e) {
+                if (!itemNameInput.contains(e.target) && !suggestionsBox.contains(e.target)) {
+                    suggestionsBox.classList.add('hidden');
+                }
+            });
+
+            catSelect.addEventListener('change', loadItemNames);
+            if (catSelect.value) {
+                loadItemNames();
+            }
             
             // PSGC Cascading Dropdowns for New Customer
             const r=document.getElementById('region_id'), p=document.getElementById('province_id'), c=document.getElementById('city_id'), b=document.getElementById('barangay_id');

@@ -17,17 +17,84 @@ class ReportController extends Controller
      */
     public function index()
     {
-        $totalActiveLoans = Transaction::where('status', 'active')->sum('loan_amount');
-        $totalRedeemed = Transaction::where('status', 'redeemed')->count();
-        $totalForfeited = Transaction::where('status', 'forfeited')->count();
-        $totalSalesRevenue = Sale::sum('total');
+        // KPIs
+        $totalActiveLoansCount = Transaction::whereIn('status', ['active', 'renewed'])->count();
+        $totalActiveLoansAmount = Transaction::whereIn('status', ['active', 'renewed'])->sum('loan_amount');
+
+        $loansReleasedToday = Transaction::whereDate('transaction_date', Carbon::today())->sum('loan_amount');
+
+        $totalCollectionsToday = Payment::whereDate('payment_date', Carbon::today())->sum('amount_paid');
+
+        $interestIncome = Payment::sum('interest_paid'); // Total overall interest income. Or maybe just today? The user said "Interest Income" which usually means overall or MTd. I will provide overall.
 
         return view('reports.index', compact(
-            'totalActiveLoans',
-            'totalRedeemed',
-            'totalForfeited',
-            'totalSalesRevenue'
+            'totalActiveLoansCount',
+            'totalActiveLoansAmount',
+            'loansReleasedToday',
+            'totalCollectionsToday',
+            'interestIncome'
         ));
+    }
+    /**
+     * Collection Summary Report
+     */
+    public function summaryReport(Request $request)
+    {
+        $startDate = $request->filled('start_date') 
+            ? Carbon::parse($request->start_date)->startOfDay() 
+            : Carbon::now()->startOfMonth();
+            
+        $endDate = $request->filled('end_date') 
+            ? Carbon::parse($request->end_date)->endOfDay() 
+            : Carbon::now()->endOfDay();
+
+        $payments = Payment::whereBetween('payment_date', [$startDate, $endDate])->get();
+
+        $totalPrincipal = $payments->sum('principal_paid');
+        $totalInterest = $payments->sum('interest_paid');
+        $totalPenalty = $payments->sum('penalty_paid');
+        $totalServiceCharge = $payments->sum('service_charge');
+        $netCollection = $payments->sum('amount_paid');
+
+        $summaryData = [
+            'total_principal' => $totalPrincipal,
+            'total_interest' => $totalInterest,
+            'total_penalty' => $totalPenalty,
+            'total_service_charge' => $totalServiceCharge,
+            'net_collection' => $netCollection,
+        ];
+
+        $transactionTypes = [
+            'Redemption Payments' => [
+                'count' => $payments->where('payment_type', 'redemption')->count(),
+                'amount' => $totalPrincipal,
+            ],
+            'Interest Payments' => [
+                'count' => $payments->where('payment_type', 'interest')->count(),
+                'amount' => $totalInterest,
+            ],
+            'Penalties Collected' => [
+                'count' => $payments->where('penalty_paid', '>', 0)->count(),
+                'amount' => $totalPenalty,
+            ],
+            'Service Charges' => [
+                'count' => $payments->where('service_charge', '>', 0)->count(),
+                'amount' => $totalServiceCharge,
+            ]
+        ];
+
+        $dateBreakdown = $payments->groupBy(function($item) {
+            return $item->payment_date->format('M d');
+        })->map(function($dayPayments) {
+            return [
+                'principal' => $dayPayments->sum('principal_paid'),
+                'interest' => $dayPayments->sum('interest_paid'),
+                'deductions' => $dayPayments->sum('service_charge'),
+                'total' => $dayPayments->sum('amount_paid')
+            ];
+        });
+
+        return view('reports.summary', compact('startDate', 'endDate', 'summaryData', 'transactionTypes', 'dateBreakdown'));
     }
 
     /**
@@ -97,36 +164,58 @@ class ReportController extends Controller
     }
 
     /**
-     * Forfeited Items Report
+     * Inventory of Pawned Items Report
      */
-    public function forfeitedReport(Request $request)
+    public function inventoryReport(Request $request)
     {
-        // Items where transaction status is forfeited
-        $query = Item::with('transactions')->whereIn('item_status', ['for_sale', 'stored', 'sold'])
-            ->whereHas('transactions', function($q) {
-                $q->where('status', 'forfeited');
-            });
+        $startDate = $request->filled('start_date') 
+            ? Carbon::parse($request->start_date)->startOfDay() 
+            : Carbon::now()->startOfMonth();
+            
+        $endDate = $request->filled('end_date') 
+            ? Carbon::parse($request->end_date)->endOfDay() 
+            : Carbon::now()->endOfDay();
 
-        if ($request->filled('start_date') || $request->filled('end_date')) {
-            $query->whereHas('transactions', function($q) use ($request) {
-                if ($request->filled('start_date')) {
-                    $q->whereDate('maturity_date', '>=', $request->start_date);
-                }
-                if ($request->filled('end_date')) {
-                    $q->whereDate('maturity_date', '<=', $request->end_date);
-                }
-            });
+        $items = Item::with(['category', 'transactions', 'saleItem.sale'])->get();
+        $inventory = [];
+
+        foreach ($items as $item) {
+            $catName = $item->category->name ?? 'Uncategorized';
+            if (!isset($inventory[$catName])) {
+                $inventory[$catName] = ['category' => $catName, 'beg' => 0, 'add' => 0, 'minus' => 0, 'end' => 0];
+            }
+            
+            $pawnedDate = $item->created_at;
+            $removedDate = null;
+            
+            if ($item->item_status === 'voided') {
+                $removedDate = $item->updated_at;
+            } elseif ($item->item_status === 'redeemed') {
+                $redeemTxn = $item->transactions->where('status', 'redeemed')->first();
+                $removedDate = $redeemTxn && $redeemTxn->redemption_date ? $redeemTxn->redemption_date : $item->updated_at;
+            } elseif ($item->item_status === 'sold') {
+                $sale = $item->saleItem?->sale;
+                $removedDate = $sale ? $sale->sold_at : $item->updated_at;
+            }
+            
+            $pawnedAt = Carbon::parse($pawnedDate);
+            $removedAt = $removedDate ? Carbon::parse($removedDate) : null;
+            
+            $wasInBegBalance = $pawnedAt->lt($startDate) && ($removedAt === null || $removedAt->gte($startDate));
+            $wasAdded = $pawnedAt->between($startDate, $endDate);
+            $wasRemoved = $removedAt !== null && $removedAt->between($startDate, $endDate);
+            
+            if ($wasInBegBalance) $inventory[$catName]['beg']++;
+            if ($wasAdded) $inventory[$catName]['add']++;
+            if ($wasRemoved) $inventory[$catName]['minus']++;
+            
+            $inventory[$catName]['end'] = $inventory[$catName]['beg'] + $inventory[$catName]['add'] - $inventory[$catName]['minus'];
         }
-        
-        if ($request->filled('status')) {
-            $query->where('item_status', $request->status);
-        } else {
-            $query->where('item_status', 'for_sale'); // default to not yet sold
-        }
 
-        $items = $query->latest()->get();
+        // Sort by category name
+        ksort($inventory);
 
-        return view('reports.forfeited', compact('items'));
+        return view('reports.inventory', compact('inventory', 'startDate', 'endDate'));
     }
 
     /**
@@ -182,30 +271,60 @@ class ReportController extends Controller
             $viewName = 'reports.pdf.sales';
             $fileName = 'sales_report_' . now()->format('YmdHis') . '.pdf';
         }
-        elseif ($type === 'forfeited') {
-            $query = Item::with('transactions')->whereIn('item_status', ['for_sale', 'stored', 'sold'])
-                ->whereHas('transactions', function($q) {
-                    $q->where('status', 'forfeited');
-                });
+        elseif ($type === 'inventory') {
+            $startDate = $request->filled('start_date') 
+                ? Carbon::parse($request->start_date)->startOfDay() 
+                : Carbon::now()->startOfMonth();
                 
-            if ($request->filled('start_date') || $request->filled('end_date')) {
-                $query->whereHas('transactions', function($q) use ($request) {
-                    if ($request->filled('start_date')) $q->whereDate('maturity_date', '>=', $request->start_date);
-                    if ($request->filled('end_date')) $q->whereDate('maturity_date', '<=', $request->end_date);
-                });
+            $endDate = $request->filled('end_date') 
+                ? Carbon::parse($request->end_date)->endOfDay() 
+                : Carbon::now()->endOfDay();
+
+            $items = Item::with(['category', 'transactions', 'saleItem.sale'])->get();
+            $inventory = [];
+
+            foreach ($items as $item) {
+                $catName = $item->category->name ?? 'Uncategorized';
+                if (!isset($inventory[$catName])) {
+                    $inventory[$catName] = ['category' => $catName, 'beg' => 0, 'add' => 0, 'minus' => 0, 'end' => 0];
+                }
+                
+                $pawnedDate = $item->created_at;
+                $removedDate = null;
+                
+                if ($item->item_status === 'voided') {
+                    $removedDate = $item->updated_at;
+                } elseif ($item->item_status === 'redeemed') {
+                    $redeemTxn = $item->transactions->where('status', 'redeemed')->first();
+                    $removedDate = $redeemTxn && $redeemTxn->redemption_date ? $redeemTxn->redemption_date : $item->updated_at;
+                } elseif ($item->item_status === 'sold') {
+                    $sale = $item->saleItem?->sale;
+                    $removedDate = $sale ? $sale->sold_at : $item->updated_at;
+                }
+                
+                $pawnedAt = Carbon::parse($pawnedDate);
+                $removedAt = $removedDate ? Carbon::parse($removedDate) : null;
+                
+                $wasInBegBalance = $pawnedAt->lt($startDate) && ($removedAt === null || $removedAt->gte($startDate));
+                $wasAdded = $pawnedAt->between($startDate, $endDate);
+                $wasRemoved = $removedAt !== null && $removedAt->between($startDate, $endDate);
+                
+                if ($wasInBegBalance) $inventory[$catName]['beg']++;
+                if ($wasAdded) $inventory[$catName]['add']++;
+                if ($wasRemoved) $inventory[$catName]['minus']++;
+                
+                $inventory[$catName]['end'] = $inventory[$catName]['beg'] + $inventory[$catName]['add'] - $inventory[$catName]['minus'];
             }
-            if ($request->filled('status')) {
-                $query->where('item_status', $request->status);
-            } else {
-                $query->where('item_status', 'for_sale'); // default to not yet sold
-            }
+            ksort($inventory);
             
             $data = [
-                'title' => 'Forfeited Items Report',
-                'items' => $query->latest()->get()
+                'title' => 'Inventory of Pawned Items Report',
+                'inventory' => $inventory,
+                'startDate' => $startDate,
+                'endDate' => $endDate
             ];
-            $viewName = 'reports.pdf.forfeited';
-            $fileName = 'forfeited_items_report_' . now()->format('YmdHis') . '.pdf';
+            $viewName = 'reports.pdf.inventory';
+            $fileName = 'inventory_report_' . now()->format('YmdHis') . '.pdf';
         } else {
             abort(404);
         }

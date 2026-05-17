@@ -47,16 +47,27 @@ trait Auditable
     private static function createAuditLog($action, $model, $oldValues = null, $newValues = null, $changes = null)
     {
         try {
+            $modelName = class_basename($model);
+            $id = $model->id ?? 'unknown';
+            
+            $description = match($action) {
+                'create' => "Created {$modelName} #{$id}",
+                'update' => "Updated {$modelName} #{$id}",
+                'delete' => "Deleted {$modelName} #{$id}",
+                default => "Performed {$action} on {$modelName} #{$id}"
+            };
+
             AuditLog::create([
                 'user_id' => Auth::id(),
                 'action' => $action,
-                'model_type' => class_basename($model),
+                'model_type' => $modelName,
                 'model_id' => $model->id,
                 'changes' => $changes,
                 'old_values' => $oldValues,
                 'new_values' => $newValues,
                 'ip_address' => Request::ip(),
                 'user_agent' => Request::userAgent(),
+                'description' => $description,
             ]);
         } catch (\Exception $e) {
             \Log::error('Failed to create audit log: ' . $e->getMessage());

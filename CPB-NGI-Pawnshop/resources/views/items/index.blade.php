@@ -2,7 +2,7 @@
     <x-slot name="header">
         <div class="flex justify-between items-center">
             <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
-                {{ __('Items') }}
+                {{ __('Inventory') }}
             </h2>
 
                 <form method="GET" action="{{ route('items.index') }}" class="flex flex-wrap gap-3 items-center">
@@ -63,7 +63,6 @@
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Name</th>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Category</th>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Appraised Value</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Condition</th>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Status</th>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Actions</th>
                                 </tr>
@@ -77,40 +76,42 @@
                                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">{{ number_format($item->appraised_value, 2) }}</td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm">
                                             <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
-                                                @if($item->condition === 'excellent') bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200
-                                                @elseif($item->condition === 'good') bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200
-                                                @elseif($item->condition === 'fair') bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200
+                                                @if($item->effective_status === 'for_sale') bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200
+                                                @elseif($item->effective_status === 'stored') bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200
+                                                @elseif($item->effective_status === 'sold') bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200
+                                                @elseif($item->effective_status === 'renewed') bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200
+                                                @elseif($item->effective_status === 'past_maturity') bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200
+                                                @elseif($item->effective_status === 'redeemed') bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200
+                                                @elseif($item->effective_status === 'for_auction') bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200
                                                 @else bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200
                                                 @endif">
-                                                {{ ucfirst($item->condition) }}
-                                            </span>
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm">
-                                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
-                                                @if($item->item_status === 'for_sale') bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200
-                                                @elseif($item->item_status === 'stored') bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200
-                                                @elseif($item->item_status === 'sold') bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200
-                                                @elseif($item->item_status === 'renewed') bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200
-                                                @elseif($item->item_status === 'redeemed') bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200
-                                                @else bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200
-                                                @endif">
-                                                @if($item->item_status === 'for_sale') For Sale
-                                                @elseif($item->item_status === 'stored') Pawned
-                                                @elseif($item->item_status === 'sold') Sold
-                                                @elseif($item->item_status === 'renewed') Renewed
-                                                @elseif($item->item_status === 'redeemed') Redeemed
-                                                @else {{ ucfirst($item->item_status) }}
+                                                @if($item->effective_status === 'for_sale') For Sale
+                                                @elseif($item->effective_status === 'stored') Pawned
+                                                @elseif($item->effective_status === 'sold') Sold
+                                                @elseif($item->effective_status === 'renewed') Renewed
+                                                @elseif($item->effective_status === 'past_maturity') Past Maturity
+                                                @elseif($item->effective_status === 'redeemed') Redeemed
+                                                @elseif($item->effective_status === 'for_auction') For Auction
+                                                @else {{ ucfirst($item->effective_status) }}
                                                 @endif
                                             </span>
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm space-x-2">
                                             <a href="{{ route('items.show', $item) }}" class="text-blue-600 hover:text-blue-900 dark:text-blue-400">View</a>
-                                            <a href="{{ route('items.edit', $item) }}" class="text-green-600 hover:text-green-900 dark:text-green-400">Edit</a>
-                                            <form method="POST" action="{{ route('items.destroy', $item) }}" style="display: inline;">
-                                                @csrf
-                                                @method('DELETE')
-                                                <button type="submit" class="text-red-600 hover:text-red-900 dark:text-red-400" onclick="return confirm('Are you sure?')">Delete</button>
-                                            </form>
+                                            
+
+
+                                            @if(in_array($item->effective_status, ['for_auction', 'redeemed', 'sold']) && $item->item_status !== 'voided')
+                                                <button x-data type="button" 
+                                                        class="text-red-600 hover:text-red-900 dark:text-red-400"
+                                                        @click="$dispatch('open-void-modal', { 
+                                                            url: '{{ route('items.request-void', $item) }}', 
+                                                            code: '{{ $item->item_code }}',
+                                                            isTeller: {{ auth()->user()->isTeller() ? 'true' : 'false' }}
+                                                        })">
+                                                    Remove
+                                                </button>
+                                            @endif
                                         </td>
                                     </tr>
                                 @endforeach
@@ -129,5 +130,57 @@
                 </div>
             @endif
         </div>
+    </div>
+
+    <!-- Void Item Modal -->
+    <div x-data="{ 
+            voidUrl: '', 
+            voidCode: '', 
+            isTeller: false 
+        }" 
+        @open-void-modal.window="
+            voidUrl = $event.detail.url; 
+            voidCode = $event.detail.code; 
+            isTeller = $event.detail.isTeller;
+            $dispatch('open-modal', 'void-item-modal');
+        ">
+        <x-modal name="void-item-modal" focusable>
+            <form method="POST" x-bind:action="voidUrl" class="p-6">
+                @csrf
+                <h2 class="text-lg font-bold text-gray-900 dark:text-gray-100">
+                    Remove: <span x-text="voidCode" class="text-red-600 dark:text-red-400"></span>
+                </h2>
+                
+                <p class="mt-1 text-sm text-gray-600 dark:text-gray-400" x-show="isTeller">
+                    Please provide a reason for this removal request. It will be sent to a manager for review.
+                </p>
+                <p class="mt-1 text-sm text-gray-600 dark:text-gray-400" x-show="!isTeller">
+                    Are you sure you want to remove this item to inventory immediately? Please provide a reason.
+                </p>
+
+                <div class="mt-6">
+                    <x-input-label for="approval_notes" value="Reason for Removal" class="sr-only" />
+                    <textarea
+                        id="approval_notes"
+                        name="approval_notes"
+                        rows="3"
+                        class="mt-1 block w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 focus:border-red-500 focus:ring-red-500 rounded-md shadow-sm"
+                        placeholder="Enter your reason here..."
+                        required
+                    ></textarea>
+                </div>
+
+                <div class="mt-6 flex justify-end">
+                    <x-secondary-button x-on:click="$dispatch('close')">
+                        Cancel
+                    </x-secondary-button>
+
+                    <x-danger-button class="ms-3">
+                        <span x-show="isTeller">Submit Request</span>
+                        <span x-show="!isTeller">Remove</span>
+                    </x-danger-button>
+                </div>
+            </form>
+        </x-modal>
     </div>
 </x-app-layout>

@@ -8,11 +8,6 @@
     <div class="py-12">
         <div class="max-w-4xl mx-auto sm:px-6 lg:px-8">
             
-            @if(session('error'))
-                <div class="mb-4 bg-red-100 dark:bg-red-900 border border-red-400 dark:border-red-700 text-red-700 dark:text-red-200 px-4 py-3 rounded relative">
-                    {{ session('error') }}
-                </div>
-            @endif
 
             <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
                 <div class="p-6 text-gray-900 dark:text-gray-100">
@@ -53,9 +48,29 @@
                         <div class="bg-blue-50 dark:bg-gray-900 border border-blue-200 dark:border-gray-700 rounded-lg p-6">
                             <h3 class="text-lg font-bold text-gray-800 dark:text-gray-200 border-b border-gray-200 dark:border-gray-700 pb-2 mb-6">Redemption Payment</h3>
                             
-                            <div class="mb-6 flex justify-between items-center text-xl bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm border border-gray-100 dark:border-gray-700">
-                                <span class="font-bold text-gray-600 dark:text-gray-300">Total Amount Due:</span>
-                                <span class="font-bold text-blue-600 dark:text-blue-400">₱{{ number_format($totalDue, 2) }}</span>
+                            <div class="mb-6 space-y-3 bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm border border-gray-100 dark:border-gray-700">
+                                <div class="flex justify-between items-center text-lg">
+                                    <span class="font-bold text-gray-600 dark:text-gray-300">Principal Loan:</span>
+                                    <span class="font-bold text-gray-800 dark:text-gray-200">₱{{ number_format($transaction->loan_amount, 2) }}</span>
+                                </div>
+                                <div class="flex justify-between items-center text-lg">
+                                    <span class="font-bold text-gray-600 dark:text-gray-300">Interest Due ({{ $termsToPay }} term/s):</span>
+                                    <span class="font-bold text-gray-800 dark:text-gray-200">₱{{ number_format($interestDue, 2) }}</span>
+                                </div>
+                                @if($penaltyDue > 0)
+                                <div class="flex justify-between items-center text-lg text-red-600 dark:text-red-400">
+                                    <span class="font-bold">Late Penalty (2%/mo):</span>
+                                    <span class="font-bold">₱{{ number_format($penaltyDue, 2) }}</span>
+                                </div>
+                                @endif
+                                <div class="flex justify-between items-center text-lg text-gray-600 dark:text-gray-300">
+                                    <span class="font-bold">Service Charge:</span>
+                                    <span class="font-bold">₱{{ number_format($serviceCharge, 2) }}</span>
+                                </div>
+                                <div class="flex justify-between items-center text-xl border-t dark:border-gray-700 pt-3 mt-3">
+                                    <span class="font-black text-gray-800 dark:text-white">Total Amount Due:</span>
+                                    <span class="font-black text-blue-600 dark:text-blue-400">₱{{ number_format($totalDue, 2) }}</span>
+                                </div>
                             </div>
 
                             <form method="POST" action="{{ route('transactions.redeem.process', $transaction) }}">

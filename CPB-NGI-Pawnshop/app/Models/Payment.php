@@ -18,6 +18,10 @@ class Payment extends Model
         'payment_date',
         'receipt_number',
         'notes',
+        'principal_paid',
+        'interest_paid',
+        'penalty_paid',
+        'service_charge',
     ];
 
     protected function casts(): array

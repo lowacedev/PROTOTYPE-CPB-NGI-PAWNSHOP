@@ -35,7 +35,7 @@ class StorePawnWizardRequest extends FormRequest
             'loan_percentage' => 'required|numeric|min:1|max:100',
             'loan_amount'     => 'required|numeric|min:1',
             'interest_rate'   => 'required|numeric|min:0|max:100',
-            'term_days'       => 'required|integer|min:1',
+            'term_days'       => 'required|integer|min:1|max:365',
         ];
 
         // If new customer, validate KYC fields
@@ -53,7 +53,8 @@ class StorePawnWizardRequest extends FormRequest
                 'address_line' => 'nullable|string|max:255',
                 'id_type'      => 'required|in:national_id,passport,driver_license,sss,philhealth,voters_id',
                 'id_number'    => 'required|string|max:100',
-                'id_image'     => 'required|image|max:2048',
+                'id_image'     => 'nullable|image|max:2048',
+                'notes'        => 'nullable|string|max:1000',
             ]);
         }
 

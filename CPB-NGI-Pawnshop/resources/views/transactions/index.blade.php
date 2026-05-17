@@ -2,7 +2,9 @@
     <x-slot name="header">
         <div class="flex justify-between items-center">
             <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">{{ __('Pawn Management') }}</h2>
-            <a href="{{ route('pawn.wizard') }}" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">+ New Pawn</a>
+            @if(!auth()->user()->isCashier())
+                <a href="{{ route('pawn.wizard') }}" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">+ New Pawn</a>
+            @endif
         </div>
     </x-slot>
     <div class="py-12">
@@ -65,10 +67,21 @@
                                                 @elseif($txn->status==='sold') bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200
                                                 @else bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200 @endif">{{ $txn->status_label }}</span>
                                         </td>
-                                        <td class="px-6 py-4 text-sm space-x-2">
+                                        <td class="px-6 py-4 text-sm space-x-2 whitespace-nowrap">
                                             <a href="{{ route('transactions.show', $txn) }}" class="text-blue-600 hover:text-blue-900 dark:text-blue-400">View</a>
-                                            @if($txn->status === 'active')
+                                            @if($txn->status === 'active' && !auth()->user()->isCashier())
                                                 <a href="{{ route('transactions.edit', $txn) }}" class="text-green-600 hover:text-green-900 dark:text-green-400">Edit</a>
+                                            @endif
+                                            @if($txn->status !== 'voided' && $txn->status !== 'redeemed' && $txn->status !== 'forfeited' && $txn->status !== 'sold' && !auth()->user()->isCashier())
+                                                <button x-data type="button" 
+                                                        class="text-red-600 hover:text-red-900 dark:text-red-400"
+                                                        @click="$dispatch('open-void-modal', { 
+                                                            url: '{{ route('transactions.request-void', $txn) }}', 
+                                                            ticket: '{{ $txn->pawn_ticket_number }}',
+                                                            isTeller: {{ auth()->user()->isTeller() ? 'true' : 'false' }}
+                                                        })">
+                                                    Void
+                                                </button>
                                             @endif
                                         </td>
                                     </tr>
@@ -86,11 +99,65 @@
                             <a href="{{ route('transactions.index') }}" class="inline-block mt-4 px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition">Clear Search</a>
                         @else
                             <p class="text-gray-500 dark:text-gray-400">No transactions yet.</p>
-                            <a href="{{ route('pawn.wizard') }}" class="inline-block mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">Create First Pawn</a>
+                            @if(!auth()->user()->isCashier())
+                                <a href="{{ route('pawn.wizard') }}" class="inline-block mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">Create First Pawn</a>
+                            @endif
                         @endif
                     </div>
                 </div>
             @endif
         </div>
+    </div>
+
+    <!-- Void Transaction Modal -->
+    <div x-data="{ 
+            voidUrl: '', 
+            voidTicket: '', 
+            isTeller: false 
+        }" 
+        @open-void-modal.window="
+            voidUrl = $event.detail.url; 
+            voidTicket = $event.detail.ticket; 
+            isTeller = $event.detail.isTeller;
+            $dispatch('open-modal', 'void-transaction-modal');
+        ">
+        <x-modal name="void-transaction-modal" focusable>
+            <form method="POST" x-bind:action="voidUrl" class="p-6">
+                @csrf
+                <h2 class="text-lg font-bold text-gray-900 dark:text-gray-100">
+                    Void Transaction: <span x-text="voidTicket" class="text-yellow-600 dark:text-yellow-400"></span>
+                </h2>
+                
+                <p class="mt-1 text-sm text-gray-600 dark:text-gray-400" x-show="isTeller">
+                    Please provide a reason for this void request. It will be sent to a manager for review.
+                </p>
+                <p class="mt-1 text-sm text-gray-600 dark:text-gray-400" x-show="!isTeller">
+                    Are you sure you want to void this transaction? All associated items will also be voided. Please provide a reason.
+                </p>
+
+                <div class="mt-6">
+                    <x-input-label for="approval_notes" value="Reason for Voiding" class="sr-only" />
+                    <textarea
+                        id="approval_notes"
+                        name="approval_notes"
+                        rows="3"
+                        class="mt-1 block w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 focus:border-yellow-500 focus:ring-yellow-500 rounded-md shadow-sm"
+                        placeholder="Enter your reason here..."
+                        required
+                    ></textarea>
+                </div>
+
+                <div class="mt-6 flex justify-end">
+                    <x-secondary-button x-on:click="$dispatch('close')">
+                        Cancel
+                    </x-secondary-button>
+
+                    <x-danger-button class="ms-3">
+                        <span x-show="isTeller">Submit Request</span>
+                        <span x-show="!isTeller">Void Immediately</span>
+                    </x-danger-button>
+                </div>
+            </form>
+        </x-modal>
     </div>
 </x-app-layout>

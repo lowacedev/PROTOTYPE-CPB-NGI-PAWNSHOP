@@ -61,6 +61,7 @@ class PawnWizardController extends Controller
                     'id_type'      => $validated['id_type'],
                     'id_number'    => $validated['id_number'],
                     'id_image_path'=> $imagePath,
+                    'notes'        => $validated['notes'] ?? null,
                     'is_active'    => true,
                 ]);
             }
@@ -108,6 +109,16 @@ class PawnWizardController extends Controller
                 'item_id'         => $item->id,
                 'appraised_value' => $item->appraised_value,
                 'quantity'        => 1,
+            ]);
+
+            \App\Models\AuditLog::create([
+                'user_id' => auth()->id(),
+                'action' => 'pawn',
+                'model_type' => 'Transaction',
+                'model_id' => $transaction->id,
+                'ip_address' => request()->ip(),
+                'user_agent' => request()->userAgent(),
+                'description' => "Processed new pawn transaction #{$transaction->pawn_ticket_number} for customer {$customer->full_name}.",
             ]);
 
             DB::commit();

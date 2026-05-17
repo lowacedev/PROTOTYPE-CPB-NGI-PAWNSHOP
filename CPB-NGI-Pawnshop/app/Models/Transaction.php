@@ -107,11 +107,49 @@ class Transaction extends Model
     }
 
     /**
-     * Get total amount due (principal + interest)
+     * Calculate advance interest (interest * number of terms)
+     */
+    public function calculateAdvanceInterest()
+    {
+        $terms = max(1, (int) ceil($this->term_days / 30));
+        return $this->calculateInterest() * $terms;
+    }
+
+    /**
+     * Get number of overdue terms (months)
+     */
+    public function getOverdueTermsAttribute()
+    {
+        $endDate = $this->redemption_date ?? now();
+        if ($this->maturity_date && $endDate->greaterThan($this->maturity_date)) {
+            return (int) ceil($this->maturity_date->floatDiffInMonths($endDate, true));
+        }
+        return 0;
+    }
+
+    /**
+     * Calculate penalty amount (2% of principal per month overdue)
+     */
+    public function calculatePenalty()
+    {
+        return $this->loan_amount * 0.02 * $this->overdue_terms;
+    }
+
+    /**
+     * Get total amount due (principal + unpaid interest + penalty)
      */
     public function getTotalDueAttribute()
     {
-        return $this->loan_amount + $this->calculateInterest();
+        $unpaidInterest = $this->calculateInterest() * max(1, $this->overdue_terms);
+        return $this->loan_amount + $unpaidInterest + $this->calculatePenalty();
+    }
+
+    /**
+     * Check if any item in this transaction has been voided
+     */
+    public function hasVoidedItems()
+    {
+        return $this->items->contains(fn($txnItem) => $txnItem->item->item_status === 'voided');
     }
 
     /**

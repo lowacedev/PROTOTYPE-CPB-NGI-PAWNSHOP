@@ -22,6 +22,14 @@ Route::get('/', function () {
 });
 
 Route::get('/dashboard', function () {
+    $user = auth()->user();
+    if ($user->isTeller()) {
+        return redirect()->route('transactions.index');
+    }
+    if ($user->isCashier()) {
+        return redirect()->route('transactions.actions.search');
+    }
+
     return view('dashboard', [
         'customerCount'    => Customer::count(),
         'activeCount'      => Transaction::where('status', 'active')->count(),
@@ -29,20 +37,46 @@ Route::get('/dashboard', function () {
         'totalLoanAmount'  => Transaction::where('status', 'active')->sum('loan_amount'),
         'recentTransactions' => Transaction::with('customer')->latest()->limit(5)->get(),
     ]);
-})->middleware(['auth'])->name('dashboard');
+})->middleware(['auth', 'role:admin,manager'])->name('dashboard');
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
-    // ─── Pawnshop Management (Teller, Manager, Admin) ─────────
-    Route::middleware('role:manager,teller')->group(function () {
+    // ─── Teller Module: Customers, Pawn Wizard, Items, View Transactions ───
+    // Teller can create pawn tickets and manage customers but CANNOT redeem/renew/forfeit
+    Route::middleware('role:teller')->group(function () {
         Route::resource('customers', CustomerController::class);
+        Route::post('/items/{item}/request-void', [ItemController::class, 'requestVoid'])->name('items.request-void');
         Route::resource('items', ItemController::class);
-        Route::resource('transactions', TransactionController::class);
 
-        // Transaction Actions (Renewal & Redemption)
+        Route::post('/transactions/{transaction}/request-void', [TransactionController::class, 'requestVoid'])->name('transactions.request-void');
+        Route::resource('transactions', TransactionController::class)->except(['index', 'show']);
+
+        // Pawn Wizard (Multi-step) - Teller creates new pawn transactions
+        Route::get('/pawn/wizard', [PawnWizardController::class, 'create'])->name('pawn.wizard');
+        Route::post('/pawn/wizard', [PawnWizardController::class, 'store'])->name('pawn.wizard.store');
+        Route::get('/pawn/receipt/{transaction}', [PawnWizardController::class, 'receipt'])->name('pawn.receipt');
+        Route::get('/api/customers/search', [PawnWizardController::class, 'searchCustomers'])->name('api.customers.search');
+        Route::get('/api/items/names/{category}', [ItemController::class, 'getNamesByCategory'])->name('api.items.names');
+    });
+
+    // ─── Transactions: View-only for Teller ─────────
+    // Teller can view transactions
+    Route::middleware('role:teller')->group(function () {
+        Route::resource('transactions', TransactionController::class)->only(['index', 'show']);
+    });
+
+    // ─── Cashier Module: Payments, POS, Redeem/Renew/Forfeit ──────────
+    // Cashier handles money: payments, redemptions, renewals, POS
+    Route::middleware('role:cashier')->group(function () {
+        // Payments
+        Route::resource('payments', PaymentController::class)->only(['index', 'create', 'store', 'destroy']);
+        Route::get('/payments/transaction/{transactionId}', [PaymentController::class, 'create'])->name('payments.create.for-transaction');
+        Route::get('/api/payments/search', [PaymentController::class, 'searchApi'])->name('api.payments.search');
+
+        // Transaction Actions (Renewal & Redemption) - Cashier only
         Route::get('/transactions-actions/search', [TransactionController::class, 'actionSearch'])->name('transactions.actions.search');
         Route::get('/api/transactions-actions/search', [TransactionController::class, 'searchTransactionApi'])->name('api.transactions.actions.search');
         
@@ -56,29 +90,22 @@ Route::middleware('auth')->group(function () {
 
         Route::post('/transactions/{transaction}/forfeit', [TransactionController::class, 'forfeit'])->name('transactions.forfeit');
 
-        // Payments
-        Route::resource('payments', PaymentController::class)->only(['index', 'create', 'store', 'destroy']);
-        Route::get('/payments/transaction/{transactionId}', [PaymentController::class, 'create'])->name('payments.create.for-transaction');
-
-        // ─── Pawn Wizard (Multi-step) ────────────────────────────
-        Route::get('/pawn/wizard', [PawnWizardController::class, 'create'])->name('pawn.wizard');
-        Route::post('/pawn/wizard', [PawnWizardController::class, 'store'])->name('pawn.wizard.store');
-        Route::get('/pawn/receipt/{transaction}', [PawnWizardController::class, 'receipt'])->name('pawn.receipt');
-        Route::get('/api/customers/search', [PawnWizardController::class, 'searchCustomers'])->name('api.customers.search');
+        // POS Module
+        Route::get('/pos', [POSController::class, 'index'])->name('pos.index');
+        Route::post('/pos/sell', [POSController::class, 'store'])->name('pos.sell');
+        Route::get('/pos/receipt/{sale}', [POSController::class, 'receipt'])->name('pos.receipt');
+        Route::post('/pos/auto-forfeit', [POSController::class, 'autoForfeit'])->name('pos.auto-forfeit');
     });
 
     // ─── Categories and Safes (Manager, Admin) ───────────────
     Route::middleware('role:manager')->group(function () {
         Route::resource('categories', CategoryController::class);
         Route::resource('safes', SafeController::class);
-    });
-
-    // ─── POS Module (Cashier, Manager, Admin) ────────────────
-    Route::middleware('role:manager,cashier')->group(function () {
-        Route::get('/pos', [POSController::class, 'index'])->name('pos.index');
-        Route::post('/pos/sell', [POSController::class, 'store'])->name('pos.sell');
-        Route::get('/pos/receipt/{sale}', [POSController::class, 'receipt'])->name('pos.receipt');
-        Route::post('/pos/auto-forfeit', [POSController::class, 'autoForfeit'])->name('pos.auto-forfeit');
+        
+        // Approvals
+        Route::get('/approvals', [\App\Http\Controllers\ApprovalController::class, 'index'])->name('approvals.index');
+        Route::post('/approvals/{approval}/approve', [\App\Http\Controllers\ApprovalController::class, 'approve'])->name('approvals.approve');
+        Route::post('/approvals/{approval}/reject', [\App\Http\Controllers\ApprovalController::class, 'reject'])->name('approvals.reject');
     });
 
     // ─── Location API (AJAX cascading dropdowns) ─────────────
@@ -90,10 +117,11 @@ Route::middleware('auth')->group(function () {
     Route::middleware('role:manager')->group(function () {
         Route::prefix('reports')->name('reports.')->group(function () {
             Route::get('/', [ReportController::class, 'index'])->name('index');
+            Route::get('/summary', [ReportController::class, 'summaryReport'])->name('summary');
             Route::get('/transactions', [ReportController::class, 'transactionsReport'])->name('transactions');
             Route::get('/payments', [ReportController::class, 'paymentsReport'])->name('payments');
             Route::get('/sales', [ReportController::class, 'salesReport'])->name('sales');
-            Route::get('/forfeited', [ReportController::class, 'forfeitedReport'])->name('forfeited');
+            Route::get('/inventory', [ReportController::class, 'inventoryReport'])->name('inventory');
             Route::get('/export/pdf/{type}', [ReportController::class, 'exportPdf'])->name('export.pdf');
         });
     });

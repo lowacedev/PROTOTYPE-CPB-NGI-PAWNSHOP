@@ -12,41 +12,64 @@
 
                 <!-- Navigation Links -->
                 <div class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
-                    <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
-                        {{ __('Dashboard') }}
-                    </x-nav-link>
-                    @if(Auth::user()->isAdmin() || Auth::user()->isManager() || Auth::user()->isTeller())
+                    @if(Auth::user()->isAdmin() || Auth::user()->isManager())
+                        <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
+                            {{ __('Dashboard') }}
+                        </x-nav-link>
+                    @endif
+
+                    {{-- Teller & Admin: Customers --}}
+                    @if(Auth::user()->isAdmin() || Auth::user()->isTeller())
                         <x-nav-link :href="route('customers.index')" :active="request()->routeIs('customers.*')">
                             {{ __('Customers') }}
                         </x-nav-link>
                         <x-nav-link :href="route('items.index')" :active="request()->routeIs('items.*')">
                             {{ __('Items') }}
                         </x-nav-link>
+                    @endif
+
+                    {{-- Teller & Admin: Transactions (Pawn) --}}
+                    @if(Auth::user()->isAdmin() || Auth::user()->isTeller())
                         <x-nav-link :href="route('transactions.index')" :active="request()->routeIs('transactions.index') || request()->routeIs('transactions.show')">
                             {{ __('Pawn') }}
                         </x-nav-link>
-                        <x-nav-link :href="route('payments.index')" :active="request()->routeIs('payments.*')">
-                            {{ __('Payments') }}
+                    @endif
+
+                    {{-- Cashier & Admin: Renew/Redeem --}}
+                    @if(Auth::user()->isAdmin() || Auth::user()->isCashier())
+                        <x-nav-link :href="route('transactions.actions.search')" :active="request()->routeIs('transactions.actions.*')">
+                            {{ __('Renew / Redeem') }}
                         </x-nav-link>
                     @endif
 
-                    @if(Auth::user()->isAdmin() || Auth::user()->isManager() || Auth::user()->isCashier())
+                    {{-- Cashier & Admin: POS --}}
+                    @if(Auth::user()->isAdmin() || Auth::user()->isCashier())
                         <x-nav-link :href="route('pos.index')" :active="request()->routeIs('pos.*')">
                             {{ __('POS') }}
                         </x-nav-link>
                     @endif
 
+                    {{-- Manager & Admin: Reports, Categories, Safes, Approvals --}}
                     @if(Auth::user()->isAdmin() || Auth::user()->isManager())
+                        <x-nav-link :href="route('approvals.index')" :active="request()->routeIs('approvals.*')">
+                            {{ __('Approvals') }}
+                            @php
+                                $pendingApprovals = \App\Models\Approval::where('status', 'pending')->count();
+                            @endphp
+                            @if($pendingApprovals > 0)
+                                <span class="ml-2 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-red-100 bg-red-600 rounded-full">{{ $pendingApprovals }}</span>
+                            @endif
+                        </x-nav-link>
                         <x-nav-link :href="route('reports.index')" :active="request()->routeIs('reports.*')">
                             {{ __('Reports') }}
                         </x-nav-link>
                         <x-nav-link :href="route('categories.index')" :active="request()->routeIs('categories.*')">
                             {{ __('Categories') }}
                         </x-nav-link>
-                        <x-nav-link :href="route('safes.index')" :active="request()->routeIs('safes.*')">
-                            {{ __('Safes') }}
-                        </x-nav-link>
+
                     @endif
+
+                    {{-- Admin Only --}}
                     @if(Auth::user()->isAdmin())
                         <x-nav-link :href="route('audit-logs.index')" :active="request()->routeIs('audit-logs.*')" class="text-yellow-600 hover:text-yellow-700 dark:text-yellow-400">
                             {{ __('Audit Logs') }}
@@ -107,41 +130,49 @@
     <!-- Responsive Navigation Menu -->
     <div :class="{'block': open, 'hidden': ! open}" class="hidden sm:hidden">
         <div class="pt-2 pb-3 space-y-1">
-            <x-responsive-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
-                {{ __('Dashboard') }}
-            </x-responsive-nav-link>
-            @if(Auth::user()->isAdmin() || Auth::user()->isManager() || Auth::user()->isTeller())
+            @if(Auth::user()->isAdmin() || Auth::user()->isManager())
+                <x-responsive-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
+                    {{ __('Dashboard') }}
+                </x-responsive-nav-link>
+            @endif
+
+            @if(Auth::user()->isAdmin() || Auth::user()->isTeller())
                 <x-responsive-nav-link :href="route('customers.index')" :active="request()->routeIs('customers.*')">
                     {{ __('Customers') }}
                 </x-responsive-nav-link>
                 <x-responsive-nav-link :href="route('items.index')" :active="request()->routeIs('items.*')">
                     {{ __('Items') }}
                 </x-responsive-nav-link>
+            @endif
+
+            @if(Auth::user()->isAdmin() || Auth::user()->isTeller())
                 <x-responsive-nav-link :href="route('transactions.index')" :active="request()->routeIs('transactions.index') || request()->routeIs('transactions.show')">
-                    {{ __('Transactions') }}
-                </x-responsive-nav-link>
-                <x-responsive-nav-link :href="route('payments.index')" :active="request()->routeIs('payments.*')">
-                    {{ __('Payments') }}
+                    {{ __('Pawn') }}
                 </x-responsive-nav-link>
             @endif
 
-            @if(Auth::user()->isAdmin() || Auth::user()->isManager() || Auth::user()->isCashier())
+            @if(Auth::user()->isAdmin() || Auth::user()->isCashier())
+                <x-responsive-nav-link :href="route('transactions.actions.search')" :active="request()->routeIs('transactions.actions.*')">
+                    {{ __('Renew / Redeem') }}
+                </x-responsive-nav-link>
                 <x-responsive-nav-link :href="route('pos.index')" :active="request()->routeIs('pos.*')">
                     {{ __('POS') }}
                 </x-responsive-nav-link>
             @endif
 
             @if(Auth::user()->isAdmin() || Auth::user()->isManager())
+                <x-responsive-nav-link :href="route('approvals.index')" :active="request()->routeIs('approvals.*')">
+                    {{ __('Approvals') }}
+                </x-responsive-nav-link>
                 <x-responsive-nav-link :href="route('reports.index')" :active="request()->routeIs('reports.*')">
                     {{ __('Reports') }}
                 </x-responsive-nav-link>
                 <x-responsive-nav-link :href="route('categories.index')" :active="request()->routeIs('categories.*')">
                     {{ __('Categories') }}
                 </x-responsive-nav-link>
-                <x-responsive-nav-link :href="route('safes.index')" :active="request()->routeIs('safes.*')">
-                    {{ __('Safes') }}
-                </x-responsive-nav-link>
+
             @endif
+
             @if(Auth::user()->isAdmin())
                 <x-responsive-nav-link :href="route('audit-logs.index')" :active="request()->routeIs('audit-logs.*')">
                     {{ __('Audit Logs') }}

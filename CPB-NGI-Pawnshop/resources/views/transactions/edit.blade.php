@@ -22,12 +22,16 @@
                                 <x-text-input id="term_days" class="block mt-1 w-full" type="number" name="term_days" :value="old('term_days', $transaction->term_days)" required />
                             </div>
                         </div>
-                        <div>
-                            <x-input-label for="notes" :value="__('Notes')" />
-                            <textarea id="notes" name="notes" rows="3" class="block mt-1 w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-md shadow-sm">{{ old('notes', $transaction->notes) }}</textarea>
+                        @if(auth()->user()->isTeller())
+                        <div class="p-4 bg-yellow-50 dark:bg-yellow-900/30 rounded-lg border border-yellow-200 dark:border-yellow-700">
+                            <h3 class="text-sm font-bold text-yellow-800 dark:text-yellow-400 mb-2">Manager Approval Required</h3>
+                            <x-input-label for="approval_notes" :value="__('Reason for Edit')" class="text-yellow-800 dark:text-yellow-400" />
+                            <textarea id="approval_notes" name="approval_notes" rows="2" required placeholder="Please explain why this transaction needs to be edited..." class="block mt-1 w-full border-yellow-300 dark:border-yellow-600 dark:bg-gray-800 dark:text-gray-300 focus:border-yellow-500 focus:ring-yellow-500 rounded-md shadow-sm">{{ old('approval_notes') }}</textarea>
+                            <p class="mt-1 text-xs text-yellow-600 dark:text-yellow-500">Your edit will be queued for manager review. The transaction will be locked until approved.</p>
                         </div>
+                        @endif
                         <div class="flex gap-4">
-                            <x-primary-button>Update Transaction</x-primary-button>
+                            <x-primary-button>Request Approval</x-primary-button>
                             <a href="{{ route('transactions.show', $transaction) }}" class="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition">Cancel</a>
                         </div>
                     </form>

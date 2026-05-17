@@ -14,7 +14,7 @@ class ItemController extends Controller
      */
     public function index(Request $request)
     {
-        $query = Item::with('category');
+        $query = Item::with('category')->where('item_status', '!=', 'removed');
 
         // 🔍 Search (name or item_code)
         if ($request->filled('search')) {
@@ -128,5 +128,84 @@ class ItemController extends Controller
     {
         $item->delete();
         return redirect()->route('items.index')->with('success', 'Item deleted successfully!');
+    }
+
+    /**
+     * Get unique item names by category for autocomplete.
+     */
+    public function getNamesByCategory($categoryId)
+    {
+        $names = Item::where('category_id', $categoryId)
+            ->distinct()
+            ->pluck('name');
+            
+        return response()->json($names);
+    }
+
+    /**
+     * Request removal of an item.
+     */
+    public function requestVoid(Request $request, Item $item)
+    {
+        $hasPendingApproval = \App\Models\Approval::where('model_type', Item::class)
+            ->where('model_id', $item->id)
+            ->where('status', 'pending')
+            ->exists();
+
+        if ($hasPendingApproval) {
+            return redirect()->route('items.index')->with('error', 'This item already has a pending removal request.');
+        }
+
+        if (auth()->user()->isTeller()) {
+            $notes = $request->input('approval_notes');
+            if (empty($notes)) {
+                return back()->with('error', 'A reason is required to request a removal.');
+            }
+
+            \App\Models\Approval::create([
+                'user_id' => auth()->id(),
+                'action' => 'remove_item',
+                'model_type' => Item::class,
+                'model_id' => $item->id,
+                'payload' => null,
+                'status' => 'pending',
+                'notes' => $notes,
+            ]);
+            
+            \App\Models\AuditLog::create([
+                'user_id' => auth()->id(),
+                'action' => 'remove_request',
+                'model_type' => 'Item',
+                'model_id' => $item->id,
+                'ip_address' => request()->ip(),
+                'user_agent' => request()->userAgent(),
+                'description' => "Requested removal of item {$item->name}. Reason: {$notes}",
+            ]);
+
+            return redirect()->route('items.index')->with('info', 'Removal requested for manager approval.');
+        }
+
+        if (auth()->user()->isManager() || auth()->user()->isAdmin()) {
+            $notes = $request->input('approval_notes');
+            if (empty($notes)) {
+                return back()->with('error', 'A reason is required to remove an item.');
+            }
+
+            $item->update(['item_status' => 'removed', 'is_available' => false]);
+            
+            \App\Models\AuditLog::create([
+                'user_id' => auth()->id(),
+                'action' => 'remove_item',
+                'model_type' => 'Item',
+                'model_id' => $item->id,
+                'ip_address' => request()->ip(),
+                'user_agent' => request()->userAgent(),
+                'description' => "Removed item {$item->name}. Reason: {$notes}",
+            ]);
+
+            return redirect()->route('items.index')->with('success', 'Item removed successfully!');
+        }
+
+        return redirect()->route('items.index')->with('error', 'Unauthorized action.');
     }
 }

@@ -20,7 +20,7 @@ class UpdateCustomerRequest extends FormRequest
             'middle_name'  => 'nullable|string|max:255',
             'last_name'    => 'required|string|max:255',
             'email'        => 'nullable|email|unique:customers,email,' . $customerId,
-            'phone_number' => 'required|string|max:20',
+            'phone_number' => ['required', 'string', 'regex:/^(09|\+639)\d{9}$/'],
             'region_id'    => 'required|exists:regions,id',
             'province_id'  => 'required|exists:provinces,id',
             'city_id'      => 'required|exists:cities,id',
@@ -31,6 +31,13 @@ class UpdateCustomerRequest extends FormRequest
             'id_image'     => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
             'notes'        => 'nullable|string',
             'is_active'    => 'nullable|boolean',
+        ];
+    }
+
+    public function messages(): array
+    {
+        return [
+            'phone_number.regex' => 'The phone number must be a valid Philippine format (e.g. 09123456789 or +639123456789).',
         ];
     }
 }

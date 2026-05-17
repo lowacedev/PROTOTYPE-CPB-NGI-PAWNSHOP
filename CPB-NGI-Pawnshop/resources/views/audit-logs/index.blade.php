@@ -15,6 +15,13 @@
                             <option value="created" @selected(request('action')=='created')>Created</option>
                             <option value="updated" @selected(request('action')=='updated')>Updated</option>
                             <option value="deleted" @selected(request('action')=='deleted')>Deleted</option>
+                            <option value="pawn" @selected(request('action')=='pawn')>Pawned</option>
+                            <option value="renew" @selected(request('action')=='renew')>Renewed</option>
+                            <option value="redeem" @selected(request('action')=='redeem')>Redeemed</option>
+                            <option value="payment" @selected(request('action')=='payment')>Payment Received</option>
+                            <option value="void_request" @selected(request('action')=='void_request')>Void Requested</option>
+                            <option value="void_approved" @selected(request('action')=='void_approved')>Void Approved</option>
+                            <option value="void_rejected" @selected(request('action')=='void_rejected')>Void Rejected</option>
                         </select>
                         <select name="model_type" class="border rounded px-4 py-2 dark:bg-gray-700">
                             <option value="">All Models</option>
@@ -34,6 +41,7 @@
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Date</th>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">User</th>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Action</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Description</th>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Model</th>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">View</th>
                                 </tr>
@@ -44,14 +52,11 @@
                                         <td class="px-6 py-4 text-sm">{{ $log->created_at->format('Y-m-d H:i:s') }}</td>
                                         <td class="px-6 py-4 text-sm">{{ $log->user->name ?? 'System' }}</td>
                                         <td class="px-6 py-4 text-sm">
-                                            <span class="px-2 py-1 rounded text-xs
-                                                @if($log->action=='created') bg-green-100 text-green-800
-                                                @elseif($log->action=='updated') bg-blue-100 text-blue-800
-                                                @elseif($log->action=='deleted') bg-red-100 text-red-800
-                                                @endif">
-                                                {{ ucfirst($log->action) }}
+                                            <span class="px-2 py-1 rounded text-xs text-{{ $log->action_color }}-800 bg-{{ $log->action_color }}-100 dark:text-{{ $log->action_color }}-200 dark:bg-{{ $log->action_color }}-900">
+                                                {{ $log->action_label }}
                                             </span>
                                         </td>
+                                        <td class="px-6 py-4 text-sm text-gray-700 dark:text-gray-300">{{ $log->description ?? '-' }}</td>
                                         <td class="px-6 py-4 text-sm">{{ class_basename($log->model_type) }} #{{ $log->model_id }}</td>
                                         <td class="px-6 py-4 text-sm"><a href="{{ route('audit-logs.show', $log) }}" class="text-blue-600">Details</a></td>
                                     </tr>

@@ -12,7 +12,8 @@
                     <div class="mb-6 grid grid-cols-2 gap-4">
                         <div><p class="text-gray-500 text-sm">Timestamp</p><p class="font-bold">{{ $auditLog->created_at }}</p></div>
                         <div><p class="text-gray-500 text-sm">User</p><p class="font-bold">{{ $auditLog->user->name ?? 'System' }}</p></div>
-                        <div><p class="text-gray-500 text-sm">Action</p><p class="font-bold">{{ ucfirst($auditLog->action) }}</p></div>
+                        <div><p class="text-gray-500 text-sm">Action</p><p class="font-bold">{{ $auditLog->action_label }}</p></div>
+                        <div class="col-span-2"><p class="text-gray-500 text-sm">Description</p><p class="font-bold">{{ $auditLog->description ?? '-' }}</p></div>
                         <div><p class="text-gray-500 text-sm">Model</p><p class="font-bold">{{ class_basename($auditLog->model_type) }} (ID: {{ $auditLog->model_id }})</p></div>
                         <div><p class="text-gray-500 text-sm">IP Address</p><p class="font-bold">{{ $auditLog->ip_address ?? 'N/A' }}</p></div>
                     </div>
